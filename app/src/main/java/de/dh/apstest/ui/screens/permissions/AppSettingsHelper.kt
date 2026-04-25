@@ -1,4 +1,4 @@
-package de.dh.apstest.ui.permissions
+package de.dh.apstest.ui.screens.permissions
 
 import android.Manifest
 import android.app.AlarmManager

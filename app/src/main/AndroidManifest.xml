@@ -11,7 +11,7 @@
         android:theme="@style/Theme.APSTest">
 
         <activity
-            android:name=".ui.common.MainActivity"
+            android:name=".ui.screens.common.MainActivity"
             android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />

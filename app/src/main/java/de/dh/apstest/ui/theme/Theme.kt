@@ -9,8 +9,8 @@ import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.graphics.Color
-import de.dh.apstest.ui.common.LocalAppFormatters
-import de.dh.apstest.ui.common.rememberAppFormatters
+import de.dh.apstest.ui.screens.common.LocalAppFormatters
+import de.dh.apstest.ui.screens.common.rememberAppFormatters
 
 @Immutable
 data class StatusColors(

@@ -1,4 +1,4 @@
-package de.dh.apstest.ui.common
+package de.dh.apstest.ui.screens.common
 
 import android.content.Intent
 import android.os.Bundle
@@ -22,9 +22,9 @@ import androidx.navigation3.runtime.rememberSaveableStateHolderNavEntryDecorator
 import androidx.navigation3.ui.NavDisplay
 import de.dh.apstest.MainApplication
 import de.dh.apstest.service.ApsService
-import de.dh.apstest.ui.dashboard.DashboardScreen
-import de.dh.apstest.ui.dashboard.DashboardViewModel
-import de.dh.apstest.ui.permissions.PermissionsViewModel
+import de.dh.apstest.ui.screens.dashboard.DashboardScreen
+import de.dh.apstest.ui.screens.dashboard.DashboardViewModel
+import de.dh.apstest.ui.screens.permissions.PermissionsViewModel
 import de.dh.apstest.ui.theme.ApsTheme
 import kotlinx.serialization.Serializable
 

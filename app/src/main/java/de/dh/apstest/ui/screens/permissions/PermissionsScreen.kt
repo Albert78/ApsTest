@@ -1,4 +1,4 @@
-package de.dh.apstest.ui.permissions
+package de.dh.apstest.ui.screens.permissions
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -36,11 +36,11 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import de.dh.apstest.R
 import de.dh.apstest.ui.composables.contentScrollIndicator
+import de.dh.apstest.ui.screens.common.Icon_Check_No
+import de.dh.apstest.ui.screens.common.Icon_Check_Yes
+import de.dh.apstest.ui.screens.common.Icon_Info
+import de.dh.apstest.ui.screens.common.Icon_Screen_Back
 import de.dh.apstest.ui.theme.ApsTheme
-import de.dh.apstest.ui.common.Icon_Check_No
-import de.dh.apstest.ui.common.Icon_Check_Yes
-import de.dh.apstest.ui.common.Icon_Info
-import de.dh.apstest.ui.common.Icon_Screen_Back
 import de.dh.eventseries.ui.composables.screenTitle
 
 @Composable

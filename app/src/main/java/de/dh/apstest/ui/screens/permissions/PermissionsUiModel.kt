@@ -1,9 +1,9 @@
-package de.dh.apstest.ui.permissions
+package de.dh.apstest.ui.screens.permissions
 
 import android.content.Context
 import android.content.res.Resources
 import de.dh.apstest.R
-import de.dh.apstest.ui.common.DisplayTextUtils
+import de.dh.apstest.ui.screens.common.DisplayTextUtils
 
 sealed class PermissionStatus {
     /**

@@ -1,4 +1,4 @@
-package de.dh.apstest.ui.dashboard
+package de.dh.apstest.ui.screens.dashboard
 
 import android.app.Application
 import androidx.lifecycle.AndroidViewModel

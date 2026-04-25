@@ -1,4 +1,4 @@
-package de.dh.apstest.ui.common
+package de.dh.apstest.ui.screens.common
 
 import android.content.res.Resources
 

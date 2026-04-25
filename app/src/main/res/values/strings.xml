@@ -15,6 +15,11 @@
     <string name="action_delete">Löschen</string>
     <string name="selection_mode_num_items_selected">%d ausgewählt</string>
 
+    <string name="aps_dashboard_screen_title">APS Dashboard</string>
+    <string name="menu_item_permissions_label">App-Berechtigungen</string>
+    <string name="menu_item_preferences_label">Einstellungen</string>
+    <string name="menu_item_datamanagement_label">Datenverwaltung</string>
+
     <string name="error_app_settings_could_not_be_opened_message">Die App-Einstellungen konnten nicht geöffnet werden. Bitte öffnen Sie sie aus den Geräteeinstellungen.</string>
     <string name="error_app_fullscreen_settings_could_not_be_opened_message">Die App-Vollbild-Einstellungen konnten nicht geöffnet werden. Bitte öffnen Sie sie aus den Geräteeinstellungen.</string>
     <string name="error_battery_optimization_settings_could_not_be_opened_message">Die App-Einstellungen für die Batterie-Optimierung konnten nicht geöffnet werden. Bitte öffnen Sie sie aus den Geräteeinstellungen.</string>

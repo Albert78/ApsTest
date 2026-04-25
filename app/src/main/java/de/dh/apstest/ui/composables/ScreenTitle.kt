@@ -25,8 +25,8 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import de.dh.apstest.R
 import de.dh.apstest.ui.composables.contentScrollIndicator
+import de.dh.apstest.ui.screens.common.Icon_Screen_Back
 import de.dh.apstest.ui.theme.ApsTheme
-import de.dh.apstest.ui.common.Icon_Screen_Back
 
 fun screenTitle(text: String): @Composable () -> Unit {
     return {

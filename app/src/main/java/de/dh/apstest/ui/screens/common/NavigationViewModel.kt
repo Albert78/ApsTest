@@ -1,4 +1,4 @@
-package de.dh.apstest.ui.common
+package de.dh.apstest.ui.screens.common
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
@@ -7,15 +7,6 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.flow.updateAndGet
-import kotlin.Boolean
-import kotlin.Suppress
-import kotlin.collections.List
-import kotlin.collections.dropLast
-import kotlin.collections.last
-import kotlin.collections.plus
-import kotlin.plus
-import kotlin.sequences.plus
-import kotlin.text.plus
 
 class NavigationViewModel(
     initialStack: List<NavKey>

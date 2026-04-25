@@ -1,4 +1,4 @@
-package de.dh.apstest.ui.permissions
+package de.dh.apstest.ui.screens.permissions
 
 /**
  * Enumerates the permissions used by the app that are required for specific functions.

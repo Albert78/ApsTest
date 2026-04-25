@@ -15,8 +15,8 @@ import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.graphics.vector.rememberVectorPainter
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import de.dh.apstest.ui.common.Icon_Scrollview_Arrow_Down
-import de.dh.apstest.ui.common.Icon_Scrollview_Arrow_Up
+import de.dh.apstest.ui.screens.common.Icon_Scrollview_Arrow_Down
+import de.dh.apstest.ui.screens.common.Icon_Scrollview_Arrow_Up
 
 /**
  * Modifier showing arrow up and down overlays over the scrollable content

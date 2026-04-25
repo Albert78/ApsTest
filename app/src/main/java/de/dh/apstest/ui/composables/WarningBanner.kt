@@ -13,8 +13,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import de.dh.apstest.ui.screens.common.Icon_Warning
 import de.dh.apstest.ui.theme.ExtendedTheme
-import de.dh.apstest.ui.common.Icon_Warning
 
 @Composable
 fun WarningBanner(
