@@ -52,11 +52,8 @@ class PermissionsViewModel(
      * Updates the internal state of the system permissions with the current system settings for this app.
      */
     fun updateAppPermissions() {
-        val canSchedule = canScheduleExactAlarms(application)
         val canPost = canPostNotifications(application)
-        val canShowFullscreen = canShowFullscreenActivity(application)
         val isIgnoring = isIgnoringBatteryOptimizations(application)
-        val canReadWriteCalendar = canReadWriteCalendar(application)
         val isAutoRevoke = isAutoRevokePermissions(application)
 
         val activeFunctions = RestrictedAppFunctions.Companion.getActiveAppFunctions(functionSwitch1, functionSwitch2)
@@ -71,39 +68,27 @@ class PermissionsViewModel(
             }
         }
 
-        val alarmPermissionStatus = getStatus(NeededPermission.SCHEDULE_EXACT_ALARMS, canSchedule)
         val notificationPermissionStatus = getStatus(NeededPermission.POST_NOTIFICATIONS, canPost)
-        val fullscreenPermissionStatus = getStatus(NeededPermission.SHOW_FULLSCREEN_ACTIVITY, canShowFullscreen)
         val ignoreBatteryOptimizationPermissionStatus = getStatus(NeededPermission.IGNORE_BATTERY_OPTIMIZATIONS, isIgnoring)
-        val readWriteCalendarPermissionStatus = getStatus(NeededPermission.READ_WRITE_CALENDAR, canReadWriteCalendar)
         // For auto-revoke, the permission status is "granted" if the app is exempted, which means isAutoRevokePermissions() is false.
         val autoRevokePermissionsPermissionStatus = getStatus(NeededPermission.MANAGE_AUTO_REVOKE, !isAutoRevoke)
 
         updateUiModel(
-            alarmPermissionStatus = alarmPermissionStatus,
             notificationPermissionStatus = notificationPermissionStatus,
-            fullscreenPermissionStatus = fullscreenPermissionStatus,
             ignoreBatteryOptimizationPermissionStatus = ignoreBatteryOptimizationPermissionStatus,
-            readWriteCalendarPermissionStatus = readWriteCalendarPermissionStatus,
             autoRevokePermissionsPermissionStatus = autoRevokePermissionsPermissionStatus
         )
     }
 
     private fun updateUiModel(
-        alarmPermissionStatus: PermissionStatus,
         notificationPermissionStatus: PermissionStatus,
-        fullscreenPermissionStatus: PermissionStatus,
         ignoreBatteryOptimizationPermissionStatus: PermissionStatus,
-        readWriteCalendarPermissionStatus: PermissionStatus,
         autoRevokePermissionsPermissionStatus: PermissionStatus
     ) {
         _uiState.update {
             PermissionsUiModel.create(
-                alarmPermissionStatus,
                 notificationPermissionStatus,
-                fullscreenPermissionStatus,
                 ignoreBatteryOptimizationPermissionStatus,
-                readWriteCalendarPermissionStatus,
                 autoRevokePermissionsPermissionStatus,
                 application
             )

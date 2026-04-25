@@ -40,12 +40,9 @@ sealed class PermissionStatus {
 
 data class PermissionsUiModel(
     val isLoading: Boolean,
-    val alarmPermissionStatus: PermissionStatus,
     val notificationPermissionStatus: PermissionStatus,
-    val fullscreenPermissionStatus: PermissionStatus,
     val ignoreBatteryOptimizationPermissionStatus: PermissionStatus,
     val autoRevokePermissionsPermissionStatus: PermissionStatus,
-    val readWriteCalendarPermissionStatus: PermissionStatus,
     val numPermissionsMissing: Int,
     val permissionsMissingText: String
 ) {
@@ -53,20 +50,14 @@ data class PermissionsUiModel(
 
     companion object {
         fun create(
-            alarmPermissionStatus: PermissionStatus,
             notificationPermissionStatus: PermissionStatus,
-            fullscreenPermissionStatus: PermissionStatus,
             ignoreBatteryOptimizationPermissionStatus: PermissionStatus,
-            readWriteCalendarPermissionStatus: PermissionStatus,
             autoRevokePermissionsPermissionStatus: PermissionStatus,
             context: Context
         ): PermissionsUiModel {
             val numMissing = getNumPermissionsMissing(
-                alarmPermissionStatus,
                 notificationPermissionStatus,
-                fullscreenPermissionStatus,
                 ignoreBatteryOptimizationPermissionStatus,
-                readWriteCalendarPermissionStatus,
                 autoRevokePermissionsPermissionStatus
             )
 
@@ -81,12 +72,9 @@ data class PermissionsUiModel(
 
             return PermissionsUiModel(
                 isLoading = false,
-                alarmPermissionStatus = alarmPermissionStatus,
                 notificationPermissionStatus = notificationPermissionStatus,
-                fullscreenPermissionStatus = fullscreenPermissionStatus,
                 ignoreBatteryOptimizationPermissionStatus = ignoreBatteryOptimizationPermissionStatus,
                 autoRevokePermissionsPermissionStatus = autoRevokePermissionsPermissionStatus,
-                readWriteCalendarPermissionStatus = readWriteCalendarPermissionStatus,
                 numPermissionsMissing = numMissing,
                 permissionsMissingText = permissionsText
             )
@@ -95,11 +83,8 @@ data class PermissionsUiModel(
         fun loading(): PermissionsUiModel {
             return PermissionsUiModel(
                 isLoading = true,
-                alarmPermissionStatus = PermissionStatus.NotNeeded,
                 notificationPermissionStatus = PermissionStatus.NotNeeded,
-                fullscreenPermissionStatus = PermissionStatus.NotNeeded,
                 ignoreBatteryOptimizationPermissionStatus = PermissionStatus.NotNeeded,
-                readWriteCalendarPermissionStatus = PermissionStatus.NotNeeded,
                 autoRevokePermissionsPermissionStatus = PermissionStatus.NotNeeded,
                 numPermissionsMissing = 0,
                 permissionsMissingText = ""
@@ -108,11 +93,8 @@ data class PermissionsUiModel(
 
         fun allMissing(context: Context): PermissionsUiModel {
             return create(
-                alarmPermissionStatus = PermissionStatus.Denied,
                 notificationPermissionStatus = PermissionStatus.Denied,
-                fullscreenPermissionStatus = PermissionStatus.Denied,
                 ignoreBatteryOptimizationPermissionStatus = PermissionStatus.Denied,
-                readWriteCalendarPermissionStatus = PermissionStatus.Denied,
                 autoRevokePermissionsPermissionStatus = PermissionStatus.Denied,
                 context = context
             )
@@ -120,31 +102,22 @@ data class PermissionsUiModel(
 
         fun allGranted(context: Context): PermissionsUiModel {
             return create(
-                alarmPermissionStatus = PermissionStatus.Granted,
                 notificationPermissionStatus = PermissionStatus.Granted,
-                fullscreenPermissionStatus = PermissionStatus.Granted,
                 ignoreBatteryOptimizationPermissionStatus = PermissionStatus.Granted,
-                readWriteCalendarPermissionStatus = PermissionStatus.Granted,
                 autoRevokePermissionsPermissionStatus = PermissionStatus.Granted,
                 context = context
             )
         }
 
         private fun getNumPermissionsMissing(
-            alarmPermissionStatus: PermissionStatus,
             notificationPermissionStatus: PermissionStatus,
-            fullscreenPermissionStatus: PermissionStatus,
             ignoreBatteryOptimizationPermissionStatus: PermissionStatus,
-            readWriteCalendarPermissionStatus: PermissionStatus,
             autoRevokePermissionsPermissionStatus: PermissionStatus
         ): Int {
             val permissions = listOf(
-                alarmPermissionStatus,
                 notificationPermissionStatus,
-                fullscreenPermissionStatus,
                 ignoreBatteryOptimizationPermissionStatus,
-                autoRevokePermissionsPermissionStatus,
-                readWriteCalendarPermissionStatus
+                autoRevokePermissionsPermissionStatus
             )
             return permissions.count { !it.isSatisfied() }
         }

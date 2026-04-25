@@ -30,6 +30,10 @@ class MainApplication : Application() {
         applicationScope.cancel()
     }
 
+    fun triggerUpdatesAfterPermissionsChange() {
+        // TODO
+    }
+
     companion object {
         lateinit var instance: MainApplication
             private set

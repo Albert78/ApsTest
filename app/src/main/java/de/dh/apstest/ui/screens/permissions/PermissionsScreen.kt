@@ -47,11 +47,8 @@ import de.dh.eventseries.ui.composables.screenTitle
 fun PermissionsScreen(
     viewModel: PermissionsViewModel,
     onNavigateUp: () -> Unit,
-    onOpenExactAlarmSettings: () -> Unit,
     onOpenNotificationSettings: () -> Unit,
-    onOpenFullscreenSettings: () -> Unit,
     onOpenBatteryOptimizationSettings: () -> Unit,
-    onOpenCalendarReadWriteSettings: () -> Unit,
     onOpenAutoRevokeSettings: () -> Unit
 ) {
     val uiState by viewModel.uiState.collectAsState()
@@ -64,11 +61,8 @@ fun PermissionsScreen(
     PermissionsScreenContent(
         uiModel = uiState,
         onNavigateUp = onNavigateUp,
-        onOpenExactAlarmSettings = onOpenExactAlarmSettings,
         onOpenNotificationSettings = onOpenNotificationSettings,
-        onOpenFullscreenSettings = onOpenFullscreenSettings,
         onOpenBatteryOptimizationSettings = onOpenBatteryOptimizationSettings,
-        onOpenCalendarReadWriteSettings = onOpenCalendarReadWriteSettings,
         onOpenAutoRevokeSettings = onOpenAutoRevokeSettings
     )
 }
@@ -78,11 +72,8 @@ fun PermissionsScreen(
 fun PermissionsScreenContent(
     uiModel: PermissionsUiModel,
     onNavigateUp: () -> Unit,
-    onOpenExactAlarmSettings: () -> Unit,
     onOpenNotificationSettings: () -> Unit,
-    onOpenFullscreenSettings: () -> Unit,
     onOpenBatteryOptimizationSettings: () -> Unit,
-    onOpenCalendarReadWriteSettings: () -> Unit,
     onOpenAutoRevokeSettings: () -> Unit
 ) {
     val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior()
@@ -289,20 +280,14 @@ fun PermissionsScreenPreview() {
     ApsTheme {
         PermissionsScreenContent(
             uiModel = PermissionsUiModel.Companion.create(
-                alarmPermissionStatus = PermissionStatus.Companion.create(isGranted = true, isNeeded = true),
                 notificationPermissionStatus = PermissionStatus.Companion.create(isGranted = false, isNeeded = true),
-                fullscreenPermissionStatus = PermissionStatus.Companion.create(isGranted = false, isNeeded = false),
                 ignoreBatteryOptimizationPermissionStatus = PermissionStatus.Companion.create(isGranted = true, isNeeded = true),
                 autoRevokePermissionsPermissionStatus = PermissionStatus.Companion.create(isGranted = true, isNeeded = true),
-                readWriteCalendarPermissionStatus = PermissionStatus.Companion.create(isGranted = false, isNeeded = true),
                 context = LocalContext.current
             ),
             onNavigateUp = {},
-            onOpenExactAlarmSettings = {},
             onOpenNotificationSettings = {},
-            onOpenFullscreenSettings = {},
             onOpenBatteryOptimizationSettings = {},
-            onOpenCalendarReadWriteSettings = {},
             onOpenAutoRevokeSettings = {}
         )
     }
