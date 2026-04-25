@@ -1,0 +1,67 @@
+*.iml
+.gradle
+/local.properties
+/.idea/caches
+/.idea/libraries
+/.idea/modules.xml
+/.idea/workspace.xml
+/.idea/navitor.xml
+/.idea/assetWizardSettings.xml
+.externalNativeBuild
+.cxx
+local.properties
+/build
+/captures
+.externalNativeBuild
+.cxx
+*.apk
+output.json
+
+# Maven local repository
+.m2
+
+# macOS
+.DS_Store
+
+# Android Studio
+*.iml
+.idea/workspace.xml
+.idea/tasks.xml
+.idea/gradle.xml
+.idea/assetWizardSettings.xml
+.idea/dictionaries
+.idea/libraries
+.idea/caches
+
+# External native build artifacts
+.externalNativeBuild
+.cxx
+
+# Built variants
+*.apk
+*.aar
+*.ap_
+*.aab
+
+# Generated files
+bin/
+gen/
+out/
+build/
+
+# Log files
+*.log
+
+# Keystore files
+*.jks
+*.keystore
+*.p12
+
+# Google Services
+google-services.json
+
+# Local configuration file (sdk path, etc)
+local.properties
+
+# Secrets
+secrets.properties
