@@ -6,7 +6,7 @@ import android.os.IBinder
 import de.dh.apstest.MainApplication
 import de.dh.apstest.core.api.GlucosePlugin
 import de.dh.apstest.core.api.PumpPlugin
-import de.dh.apstest.data.GlucoseEntity
+import de.dh.apstest.data.DataRepository
 import de.dh.apstest.plugin.cgm.SampleCgmPlugin
 import de.dh.apstest.plugin.pump.SamplePumpPlugin
 import kotlinx.coroutines.CoroutineScope
@@ -21,6 +21,8 @@ class ApsService : Service() {
     private lateinit var glucosePlugin: GlucosePlugin
     private lateinit var pumpPlugin: PumpPlugin
 
+    val dataRepository: DataRepository = MainApplication.instance.dataRepository
+
     override fun onCreate() {
         super.onCreate()
         // Here we could use a plugin manager or dependency injection
@@ -34,14 +36,7 @@ class ApsService : Service() {
         serviceScope.launch {
             glucosePlugin.getGlucoseReadings().collect { reading ->
                 // 1. Persist reading
-                val db = (application as MainApplication).database
-                db.glucoseDao().insert(
-                    GlucoseEntity(
-                        value = reading.value,
-                        timestamp = reading.timestamp,
-                        unit = reading.unit
-                    )
-                )
+                dataRepository.persistReading(reading)
 
                 // 2. Run APS Algorithm (Logic would go here)
                 runApsLogic(reading.value)

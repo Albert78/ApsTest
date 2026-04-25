@@ -1,0 +1,51 @@
+package de.dh.apstest
+
+import android.content.Context
+import androidx.datastore.core.DataStore
+import androidx.datastore.preferences.core.Preferences
+import androidx.datastore.preferences.core.booleanPreferencesKey
+import androidx.datastore.preferences.core.edit
+import androidx.datastore.preferences.preferencesDataStore
+import de.dh.apstest.AppStateRepository.Companion.USER_DECLINED_PERMISSIONS_KEY
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.filterNotNull
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.stateIn
+
+val Context.dataStore: DataStore<Preferences> by preferencesDataStore(name = "settings")
+
+val Preferences?.userDeclinedPermissions: Boolean
+    get() = this?.get(USER_DECLINED_PERMISSIONS_KEY) ?: false
+
+class AppStateRepository(private val context: Context, private val scope: CoroutineScope) {
+    /**
+     * Gets the eagerly loaded state of the preferences as StateFlow, i.e. it can be queried
+     * without the use of a suspend function, but the value will initially be {@ null} until
+     * the preferences are loaded.
+     */
+    val cachedPreferences: StateFlow<Preferences?> = context.dataStore.data
+        .stateIn(
+            scope = scope,
+            started = SharingStarted.Eagerly,
+            initialValue = null
+        )
+
+    /**
+     * Gets the current preferences as a suspend function.
+     */
+    suspend fun getPreferences(): Preferences {
+        return cachedPreferences.filterNotNull().first()
+    }
+
+    suspend fun setUserDeclinedPermissions(value: Boolean) {
+        context.dataStore.edit { mutablePreferences ->
+            mutablePreferences[USER_DECLINED_PERMISSIONS_KEY] = value
+        }
+    }
+
+    companion object {
+        val USER_DECLINED_PERMISSIONS_KEY = booleanPreferencesKey("user_declined_permissions")
+    }
+}

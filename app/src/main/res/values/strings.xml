@@ -1,3 +1,49 @@
 <resources>
     <string name="app_name">APSTest</string>
+
+    <string name="short_date_time_format">dd.LL.yyyy, HH:mm</string>
+    <string name="short_date_format">dd.LL.yyyy</string>
+    <string name="long_date_format">EE, dd. MMMM yyyy</string>
+    <string name="long_date_time_format">EE, dd. MMMM yyyy, HH:mm</string>
+
+    <string name="cd_cancel">Abbrechen</string>
+    <string name="cd_navigate_up">Zurück</string>
+    <string name="cd_close">Schließen</string>
+    <string name="cd_more_options">Überlaufmenü - mehr Optionen anzeigen</string>
+    <string name="cd_clear_selection">Selektion aufheben</string>
+    <string name="cd_delete_selected_items">Selektierte Einträge löschen</string>
+    <string name="action_delete">Löschen</string>
+    <string name="selection_mode_num_items_selected">%d ausgewählt</string>
+
+    <string name="error_app_settings_could_not_be_opened_message">Die App-Einstellungen konnten nicht geöffnet werden. Bitte öffnen Sie sie aus den Geräteeinstellungen.</string>
+    <string name="error_app_fullscreen_settings_could_not_be_opened_message">Die App-Vollbild-Einstellungen konnten nicht geöffnet werden. Bitte öffnen Sie sie aus den Geräteeinstellungen.</string>
+    <string name="error_battery_optimization_settings_could_not_be_opened_message">Die App-Einstellungen für die Batterie-Optimierung konnten nicht geöffnet werden. Bitte öffnen Sie sie aus den Geräteeinstellungen.</string>
+
+    <string name="permissions_title">App-Berechtigungen</string>
+    <string name="permissions_intro_text">Unter Android können (und müssen) Nutzer bestimmte Funktionen von Apps einzeln freigeben/berechtigen.</string>
+    <string name="permissions_activity_start_all_permissions_granted">Alle notwendigen Berechtigungen sind erteilt:</string>
+    <plurals name="permissions_activity_start_permissions_missing">
+        <item quantity="zero">@string/permissions_activity_start_all_permissions_granted</item> <!-- Attention: Use DisplayUtils#getQuantityStringZero, see docs there -->
+        <item quantity="one">Für eine ordnungsgemäße Funktion fehlt der App eine Berechtigung:</item>
+        <item quantity="other">Für eine ordnungsgemäße Funktion fehlen der App %1$d Berechtigungen:</item>
+    </plurals>
+
+    <string name="cd_permission_granted">Berechtigung erteilt</string>
+    <string name="cd_permission_not_granted">Berechtigung nicht erteilt</string>
+    <string name="cd_permission_not_needed">Berechtigung aktuell nicht benötigt</string>
+    <string name="permission_notifications_desc">Benachrichtigung anzeigen, wenn Termine fällig werden</string>
+    <string name="ignore_battery_optimization_permissions_desc">Der Energiesparmodus kann die Alarme der App blockieren</string>
+    <string name="ignore_battery_optimization_permissions_label">Die App kann von Android in den Energiesparmodus versetzt werden</string>
+    <string name="ignore_battery_optimization_permissions_off_label">Die App wird nicht in den Energiesparmodus versetzt</string>
+    <string name="auto_revokePermissions_desc">Android entzieht Apps standardmäßig nach einiger Zeit ihre Berechtigungen</string>
+    <string name="auto_revoke_permissions_label">Automatischer Entzug der Berechtigungen ist eingeschaltet</string>
+    <string name="auto_revoke_permissions_off_label">Die App behält auch bei längerer Nichtbenutzung ihre Berechtigungen</string>
+    <string name="boot_receiver_desc">Die App stellt die Alarme und Benachrichtigungen auch nach einem Neustart wieder her.</string>
+    <string name="permission_not_needed">Die Berechtigung wird aktuell nicht benötigt</string>
+
+    <string name="permission_granted_text">Berechtigung freigegeben</string>
+    <string name="permission_not_granted_text">Berechtigung nicht erteilt</string>
+
+    <string name="permissions_were_declined_but_needed">Es fehlen Berechtigungen</string>
+    <string name="permissions_needed_fix_action">Reparieren</string>
 </resources>
