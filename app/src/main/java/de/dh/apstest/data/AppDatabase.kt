@@ -7,21 +7,26 @@ import androidx.room.Insert
 import androidx.room.Query
 import androidx.room.Room
 import androidx.room.RoomDatabase
-import kotlinx.coroutines.flow.Flow
 import java.util.concurrent.Executors
 
 @Dao
-interface GlucoseDao {
-    @Query("SELECT * FROM glucose_readings ORDER BY timestamp DESC")
-    fun getAllReadings(): Flow<List<GlucoseEntity>>
+interface ProvidersDao {
+    @Query("SELECT * FROM sensor_type ORDER BY name ASC")
+    fun getAllSensorTypes(): List<SensorTypeEntity>
+
+    @Query("SELECT * FROM data_provider ORDER BY name ASC")
+    fun getAllDataProviders(): List<DataProviderEntity>
+
+    @Query("SELECT * FROM glucose_reading where timestamp_ms > :timestampMs ORDER BY timestamp_ms ASC")
+    fun getReadingsFromTime(timestampMs: Long): List<GlucoseReadingEntity>
 
     @Insert
-    suspend fun insert(reading: GlucoseEntity)
+    suspend fun insert(reading: GlucoseReadingEntity)
 }
 
-@Database(entities = [GlucoseEntity::class, InsulinEntity::class], version = 1)
+@Database(entities = [SensorTypeEntity::class, DataProviderEntity::class, GlucoseReadingEntity::class], version = 1)
 abstract class AppDatabase : RoomDatabase() {
-    abstract fun glucoseDao(): GlucoseDao
+    abstract fun providersDao(): ProvidersDao
 
     companion object {
         const val CURRENT_DATABASE_VERSION = "1.0"
