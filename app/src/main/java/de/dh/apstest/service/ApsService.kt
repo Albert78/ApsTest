@@ -6,6 +6,7 @@ import android.os.IBinder
 import de.dh.apstest.MainApplication
 import de.dh.apstest.core.api.GlucosePlugin
 import de.dh.apstest.core.api.PumpPlugin
+import de.dh.apstest.core.api.data.Minutes
 import de.dh.apstest.data.DataRepository
 import de.dh.apstest.plugin.cgm.SampleCgmPlugin
 import de.dh.apstest.plugin.pump.SamplePumpPlugin
@@ -25,7 +26,7 @@ class ApsService : Service() {
 
     override fun onCreate() {
         super.onCreate()
-        // Here we could use a plugin manager or dependency injection
+        // Here we could use a plugin manager
         glucosePlugin = SampleCgmPlugin()
         pumpPlugin = SamplePumpPlugin()
 
@@ -34,13 +35,19 @@ class ApsService : Service() {
 
     private fun startObservation() {
         serviceScope.launch {
-            glucosePlugin.getGlucoseReadings().collect { reading ->
-                // 1. Persist reading
-                dataRepository.persistReading(reading)
+            val sensorType = dataRepository.getOrCreateSensorTypeByName(glucosePlugin.getSensorTypeName())
+            val dataProvider = dataRepository.getOrCreateDataProviderByName(glucosePlugin.name, glucosePlugin.dataProviderType)
+            val tickIntervalSize = Minutes(5)
 
-                // 2. Run APS Algorithm (Logic would go here)
-                runApsLogic(reading.value)
-            }
+            val values = glucosePlugin.getValues()
+                .persist(dataRepository, dataProvider, sensorType)
+                .smoothGlucosePTWMA(windowSize = Minutes(5), weightSlope = 0.7)
+                .sampleByTick(tickIntervalSize = tickIntervalSize)
+                .toRollingHistory(historyHours = 10, tickIntervalSize = tickIntervalSize)
+            // Weiter:
+            // 5. weitere Berechnungen (COB, IOB, Sensitivity, Basal)
+            // 6. Ausgabe
+
         }
     }
 

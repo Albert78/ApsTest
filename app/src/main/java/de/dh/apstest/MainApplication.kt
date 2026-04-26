@@ -1,8 +1,8 @@
 package de.dh.apstest
 
 import android.app.Application
-import de.dh.apstest.data.AppDatabase
 import de.dh.apstest.data.DataRepository
+import de.dh.apstest.data.db.AppDatabase
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob

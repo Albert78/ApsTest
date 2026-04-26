@@ -1,12 +1,11 @@
-package de.dh.apstest.data
+package de.dh.apstest.data.db.entities
 
 import androidx.room.Entity
 import androidx.room.ForeignKey
 import androidx.room.Index
 import androidx.room.PrimaryKey
-import de.dh.apstest.model.GlucoseUnit
-
-const val ID_UNDEFINED = -1L
+import de.dh.apstest.core.api.ID_UNDEFINED
+import de.dh.apstest.core.api.data.BgSampleKind
 
 /**
  * Types of glucose sensors like "Libre3", "Dexcom G6", ...
@@ -16,8 +15,8 @@ const val ID_UNDEFINED = -1L
 )
 data class SensorTypeEntity(
     @PrimaryKey(autoGenerate = true)
-    var id: Long = ID_UNDEFINED,
-    var name: String
+    val id: Long = ID_UNDEFINED,
+    val name: String
 )
 
 /**
@@ -28,9 +27,9 @@ data class SensorTypeEntity(
 )
 data class DataProviderEntity(
     @PrimaryKey(autoGenerate = true)
-    var id: Long = ID_UNDEFINED,
-    var name: String,
-    var type: String
+    val id: Long = ID_UNDEFINED,
+    val name: String,
+    val type: String
 )
 
 @Entity(
@@ -54,8 +53,8 @@ data class DataProviderEntity(
 data class GlucoseReadingEntity(
     @PrimaryKey(autoGenerate = true)
     val id: Long = ID_UNDEFINED,
-    val value: Double,
-    val unit: GlucoseUnit,
+    val value_mgdl: Short,
+    val sampleKind: BgSampleKind,
     val timestamp_ms: Long,
     val fk_data_provider: Long,
     val fk_source_sensor: Long

@@ -1,4 +1,4 @@
-package de.dh.apstest.data
+package de.dh.apstest.data.db
 
 import android.content.Context
 import androidx.room.Dao
@@ -7,24 +7,48 @@ import androidx.room.Insert
 import androidx.room.Query
 import androidx.room.Room
 import androidx.room.RoomDatabase
+import de.dh.apstest.data.db.entities.DataProviderEntity
+import de.dh.apstest.data.db.entities.GlucoseReadingEntity
+import de.dh.apstest.data.db.entities.SensorTypeEntity
+import de.dh.apstest.data.db.entities.TherapyDataEntity
 import java.util.concurrent.Executors
 
 @Dao
 interface ProvidersDao {
     @Query("SELECT * FROM sensor_type ORDER BY name ASC")
-    fun getAllSensorTypes(): List<SensorTypeEntity>
+    suspend fun getAllSensorTypes(): List<SensorTypeEntity>
 
-    @Query("SELECT * FROM data_provider ORDER BY name ASC")
-    fun getAllDataProviders(): List<DataProviderEntity>
-
-    @Query("SELECT * FROM glucose_reading where timestamp_ms > :timestampMs ORDER BY timestamp_ms ASC")
-    fun getReadingsFromTime(timestampMs: Long): List<GlucoseReadingEntity>
+    @Query("SELECT * FROM sensor_type where name = :name")
+    suspend fun getSensorTypeByName(name: String): SensorTypeEntity?
 
     @Insert
-    suspend fun insert(reading: GlucoseReadingEntity)
+    suspend fun insertSensorType(value: SensorTypeEntity)
+
+    @Query("SELECT * FROM data_provider ORDER BY name ASC")
+    suspend fun getAllDataProviders(): List<DataProviderEntity>
+
+    @Query("SELECT * FROM data_provider where name = :name")
+    suspend fun getDataProviderByName(name: String): DataProviderEntity?
+
+    @Insert
+    suspend fun insertDataProvider(value: DataProviderEntity)
+
+    @Query("SELECT * FROM glucose_reading where timestamp_ms > :timestampMs ORDER BY timestamp_ms ASC")
+    suspend fun getReadingsFromTime(timestampMs: Long): List<GlucoseReadingEntity>
+
+    @Insert
+    suspend fun insertGlucoseReading(reading: GlucoseReadingEntity)
 }
 
-@Database(entities = [SensorTypeEntity::class, DataProviderEntity::class, GlucoseReadingEntity::class], version = 1)
+@Database(entities = [
+    // Providers
+    SensorTypeEntity::class,
+    DataProviderEntity::class,
+    GlucoseReadingEntity::class,
+
+    // Therapy
+    TherapyDataEntity::class
+], version = 1)
 abstract class AppDatabase : RoomDatabase() {
     abstract fun providersDao(): ProvidersDao
 
