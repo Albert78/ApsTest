@@ -57,5 +57,5 @@
 
     <string name="aps_service_notification_channel_name">APS Service</string>
     <string name="aps_service_notification_title">APS wird ausgeführt</string>
-    <string name="aps_service_notification_content">APS Test-Implementierung</string>
+    <string name="aps_service_notification_content">Aktueller Glucose-Wert: %1$s</string>
 </resources>

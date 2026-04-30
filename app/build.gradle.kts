@@ -45,6 +45,7 @@ android {
 dependencies {
     implementation(project(":core-api"))
     implementation(project(":plugin-cgm-sample"))
+    implementation(project(":plugin-glucose-receiver"))
     implementation(project(":plugin-pump-sample"))
 
     implementation(libs.androidx.core.ktx)

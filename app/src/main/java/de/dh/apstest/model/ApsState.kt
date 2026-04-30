@@ -18,13 +18,14 @@ class ApsState(
     // TODO: Triggers for UI updates as flow
 
     fun updateBg(bg: SmoothedBgSample, dataTick: Tick) {
-        val tickState = rollingHistory.getApsTickState(dataTick, true)
-        tickState?.bg = bg ?: return
+        val tickState = rollingHistory.getApsTickState(dataTick, true) ?: return
+        tickState.bg = bg
         recalculate()
     }
 
     fun recalculate() {
         // TODO
+        rollingHistory.publishState()
     }
 
     companion object {

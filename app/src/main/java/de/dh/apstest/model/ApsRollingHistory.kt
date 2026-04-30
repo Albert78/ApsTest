@@ -6,6 +6,10 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 
+data class ApsHistorySnapshot(
+    val ticks: List<ApsTickState?>
+)
+
 class ApsRollingHistory(
     val historyHours: Int = 10,
     val tickDuration: Minutes = Minutes(5)
@@ -18,8 +22,8 @@ class ApsRollingHistory(
     private var anchorTick: Int = -1
 
     // Emits the buffer as unmodifiable list to all observers (e.g. UI)
-    private val _state = MutableStateFlow<List<ApsTickState?>>(List(capacity) { null })
-    val state: StateFlow<List<ApsTickState?>> = _state.asStateFlow()
+    private val _state = MutableStateFlow<ApsHistorySnapshot>(getSnapshot())
+    val state: StateFlow<ApsHistorySnapshot> = _state.asStateFlow()
 
     /**
      * Advances the history's timeframe to a new point in time.
@@ -63,7 +67,7 @@ class ApsRollingHistory(
     }
 
     fun publishState() {
-        _state.value = buffer.toList()
+        _state.value = getSnapshot()
     }
 
     private fun bufferIndex(tick: Tick): Int {
@@ -71,7 +75,23 @@ class ApsRollingHistory(
     }
 
     /**
-     * Synchronous access to the current history.
+     * Synchronous access to a chronological snapshot of the current history.
+     * The list is ordered from oldest (index 0) to newest.
      */
-    fun getSnapshot(): List<ApsTickState?> = _state.value
+    fun getSnapshot(): ApsHistorySnapshot {
+        val currentAnchor = anchorTick
+        if (currentAnchor == -1) {
+            return ApsHistorySnapshot(List(capacity) { null })
+        }
+
+        val result = List(capacity) { i ->
+            val tickValue = currentAnchor - capacity + 1 + i
+            if (tickValue >= 0) {
+                buffer[bufferIndex(Tick(tickValue)) % capacity]
+            } else {
+                null
+            }
+        }
+        return ApsHistorySnapshot(result)
+    }
 }

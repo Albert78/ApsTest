@@ -1,4 +1,4 @@
-package de.dh.apstest.plugin.cgm
+package de.dh.apstest.plugin.glucose
 
 import de.dh.apstest.core.api.GlucosePlugin
 import de.dh.apstest.core.api.data.BgReading
@@ -32,17 +32,21 @@ class SampleCgmPlugin : GlucosePlugin {
 
     override fun getValues(): Flow<BgReading> {
         return getRawGlucoseReadings().map { raw ->
-            val kind = when (raw.value.mgdl.toInt()) {
-                39 -> BgSampleKind.Low
-                401 -> BgSampleKind.High
-                0 -> BgSampleKind.Invalid
-                else -> BgSampleKind.Value
-            }
-            BgReading(
-                value = raw.value,
-                sampleKind = kind,
-                timestamp = raw.timestamp
-            )
+            sampleMapRawValues(raw)
         }
+    }
+
+    private fun sampleMapRawValues(raw: RawBg): BgReading {
+        val kind = when (raw.value.mgdl.toInt()) {
+            39 -> BgSampleKind.Low
+            401 -> BgSampleKind.High
+            0 -> BgSampleKind.Invalid
+            else -> BgSampleKind.Value
+        }
+        return BgReading(
+            value = raw.value,
+            sampleKind = kind,
+            timestamp = raw.timestamp
+        )
     }
 }

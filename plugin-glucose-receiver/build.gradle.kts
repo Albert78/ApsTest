@@ -3,7 +3,7 @@ plugins {
 }
 
 android {
-    namespace = "de.dh.apstest.plugin.glucose"
+    namespace = "de.dh.apstest.plugin.glucose.receiver"
     compileSdk = 37
 
     defaultConfig {
