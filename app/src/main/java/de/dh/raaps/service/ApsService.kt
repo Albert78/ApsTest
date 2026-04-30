@@ -2,9 +2,7 @@ package de.dh.raaps.service
 
 import android.app.Notification
 import android.app.Service
-import android.content.Context
 import android.content.Intent
-import android.content.IntentFilter
 import android.content.pm.ServiceInfo
 import android.os.IBinder
 import de.dh.raaps.MainApplication
@@ -13,7 +11,6 @@ import de.dh.raaps.core.api.PumpPlugin
 import de.dh.raaps.core.api.ToDo
 import de.dh.raaps.core.api.data.Minutes
 import de.dh.raaps.data.DataRepository
-import de.dh.raaps.interop.DataReceiver
 import de.dh.raaps.model.ApsState
 import de.dh.raaps.notifications.ApsNotificationData
 import de.dh.raaps.notifications.ApsNotificationManager
@@ -27,7 +24,6 @@ class ApsService : Service() {
     private val serviceScope = CoroutineScope(Dispatchers.IO + serviceJob)
 
     private val notificationManager: ApsNotificationManager = MainApplication.instance.notificationManager
-    private val dataReceiver = DataReceiver()
 
     val dataRepository: DataRepository = MainApplication.instance.dataRepository
     val apsState : ApsState = MainApplication.instance.apsState
@@ -41,7 +37,6 @@ class ApsService : Service() {
         startServiceInForeground()
 
         initialize()
-        registerDataReceiver()
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
@@ -67,11 +62,6 @@ class ApsService : Service() {
             notification,
             ServiceInfo.FOREGROUND_SERVICE_TYPE_HEALTH
         )
-    }
-
-    private fun registerDataReceiver() {
-        val filter = IntentFilter("com.eveningoutpost.dexdrip.BgEstimate")
-        registerReceiver(dataReceiver, filter, Context.RECEIVER_EXPORTED)
     }
 
     private fun installApsPipeline() {
@@ -102,7 +92,6 @@ class ApsService : Service() {
     override fun onBind(intent: Intent?): IBinder? = null
 
     override fun onDestroy() {
-        unregisterReceiver(dataReceiver)
         MainApplication.instance.setServiceRunning(false)
         serviceJob.cancel()
         super.onDestroy()

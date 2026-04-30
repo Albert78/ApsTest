@@ -45,17 +45,32 @@ class MainApplication : Application() {
         appStateRepository = AppStateRepository(context = this, scope = applicationScope)
         val appDatabase = AppDatabase.getInstance(this)
         dataRepository = DataRepository(appDatabase)
+
+        // TODO: Use plugin manager for dynamically starting plugins
+        glucosePlugin = ReceiverGlucosePlugin(this)
+        glucosePlugin?.start(this)
+
+        pumpPlugin = SamplePumpPlugin()
+        pumpPlugin?.start(this)
+
         // TODO: Decouple initialization of APS system
         apsState = ApsState(dataRepository)
-        glucosePlugin = ReceiverGlucosePlugin()
-        pumpPlugin = SamplePumpPlugin()
         startApsService()
+
         installNotificationUpdater()
     }
 
     override fun onTerminate() {
-        super.onTerminate()
+        glucosePlugin?.let {
+            it.stop()
+            glucosePlugin = null
+        }
+        pumpPlugin?.let {
+            it.stop()
+            pumpPlugin = null
+        }
         applicationScope.cancel()
+        super.onTerminate()
     }
 
     fun triggerUpdatesAfterPermissionsChange() {

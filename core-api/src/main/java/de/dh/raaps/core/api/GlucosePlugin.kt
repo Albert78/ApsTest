@@ -1,5 +1,6 @@
 package de.dh.raaps.core.api
 
+import android.app.Application
 import de.dh.raaps.core.api.data.BgReading
 import kotlinx.coroutines.flow.Flow
 
@@ -8,5 +9,7 @@ interface GlucosePlugin {
     val dataProviderType: String
     fun getSensorTypeName(): String
     fun getValues(): Flow<BgReading>
-}
 
+    fun start(application: Application)
+    fun stop()
+}

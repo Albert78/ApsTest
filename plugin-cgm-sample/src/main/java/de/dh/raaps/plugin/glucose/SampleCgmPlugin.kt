@@ -1,5 +1,6 @@
 package de.dh.raaps.plugin.glucose
 
+import android.app.Application
 import de.dh.raaps.core.api.GlucosePlugin
 import de.dh.raaps.core.api.data.BgReading
 import de.dh.raaps.core.api.data.BgSampleKind
@@ -18,6 +19,14 @@ class SampleCgmPlugin : GlucosePlugin {
     override val dataProviderType: String = "CGM"
 
     override fun getSensorTypeName() = "Libre3"
+
+    override fun start(application: Application) {
+        // Nothing to do
+    }
+
+    override fun stop() {
+        // Nothing to do
+    }
 
     fun getRawGlucoseReadings(): Flow<RawBg> = flow {
         while (true) {
@@ -50,4 +59,3 @@ class SampleCgmPlugin : GlucosePlugin {
         )
     }
 }
-

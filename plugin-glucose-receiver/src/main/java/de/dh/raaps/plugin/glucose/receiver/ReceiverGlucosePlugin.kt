@@ -1,29 +1,69 @@
 package de.dh.raaps.plugin.glucose.receiver
 
+import android.app.Application
+import android.content.Context
+import android.content.IntentFilter
+import android.util.Log
 import de.dh.raaps.core.api.GlucosePlugin
 import de.dh.raaps.core.api.data.BgReading
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.asSharedFlow
 
-class ReceiverGlucosePlugin : GlucosePlugin {
+/**
+ * Glucose plugin which receives glucose values from other Android apps via a BroadcastReceiver.
+ * The receiver will dynamically be registered on [start] and [stop] calls.
+ */
+class ReceiverGlucosePlugin(
+    val application: Application
+) : GlucosePlugin {
     override val name: String = "Receiver Glucose Plugin"
-
     override val dataProviderType: String = "Glucose"
+    val dataReceiver: DataReceiver = DataReceiver()
+
+    override fun start(application: Application) {
+        if (instance != null) {
+            throw IllegalStateException("Plugin ${ReceiverGlucosePlugin::class.simpleName} is already started")
+        }
+        instance = this
+        registerReceiver()
+    }
+
+    override fun stop() {
+        instance = null
+        unregisterReceiver()
+    }
+
+    private fun registerReceiver() {
+        val filter = IntentFilter("com.eveningoutpost.dexdrip.BgEstimate")
+        application.registerReceiver(dataReceiver, filter, Context.RECEIVER_EXPORTED)
+    }
+
+    private fun unregisterReceiver() {
+        application.unregisterReceiver(dataReceiver)
+    }
 
     override fun getSensorTypeName() = "External Receiver"
 
     private val _readings = MutableSharedFlow<BgReading>(extraBufferCapacity = 64)
 
     /**
-     * This can be used to inject values received from a BroadcastReceiver.
+     * Values received by our BroadcastReceiver will go here.
      */
     fun injectReading(value: BgReading): Boolean {
-        return _readings.tryEmit(value)
+        val result = _readings.tryEmit(value)
+        if (!result) {
+            Log.w(TAG, "${ReceiverGlucosePlugin::class.simpleName} is unable to emit a new glucose reading due to a busy readings flow")
+        }
+        return result
     }
 
     override fun getValues(): Flow<BgReading> {
         return _readings.asSharedFlow()
     }
-}
 
+    companion object {
+        val TAG = ReceiverGlucosePlugin::class.simpleName
+        var instance: ReceiverGlucosePlugin? = null
+    }
+}

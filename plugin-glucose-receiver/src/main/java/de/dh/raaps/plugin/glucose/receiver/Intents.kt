@@ -1,4 +1,4 @@
-package de.dh.raaps.interop
+package de.dh.raaps.plugin.glucose.receiver
 
 class Intents {
     companion object {
@@ -15,4 +15,3 @@ class Intents {
         const val XDRIP_DATA_SOURCE_DESCRIPTION = "com.eveningoutpost.dexdrip.Extras.SourceDesc"
     }
 }
-

@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <!-- To receive data from xdrip. -->
+    <uses-permission android:name="com.eveningoutpost.dexdrip.permissions.RECEIVE_BG_ESTIMATE" />
+
+    <application>
+        <!-- Receive new BG readings from other local apps -->
+        <!--
+          It's necessary to declare the receiver here, although the actual receiver is
+          declared dynamically. This is because apps like Juggluco finds other apps reacting to
+          the specified action via the packet manager (as of April 2026)
+        -->
+        <receiver
+            android:name=".DataReceiver"
+            android:enabled="true"
+            android:exported="true">
+            <intent-filter>
+                <!-- Receive from xDrip and Juggluco -->
+                <action android:name="com.eveningoutpost.dexdrip.BgEstimate" />
+
+                <!-- TODO: Support more glucose sources -->
+            </intent-filter>
+        </receiver>
+    </application>
+
+</manifest>

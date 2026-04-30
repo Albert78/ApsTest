@@ -9,9 +9,6 @@
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_HEALTH" />
     <uses-permission android:name="android.permission.HIGH_SAMPLING_RATE_SENSORS" />
 
-    <!-- To receive data from xdrip. -->
-    <uses-permission android:name="com.eveningoutpost.dexdrip.permissions.RECEIVE_BG_ESTIMATE" />
-
     <application
         android:name=".MainApplication"
         android:allowBackup="true"
@@ -34,18 +31,6 @@
             android:name=".service.ApsService"
             android:exported="false"
             android:foregroundServiceType="health" />
-
-        <!-- Receive new BG readings from other local apps -->
-        <receiver
-            android:name=".interop.DataReceiver"
-            android:enabled="true"
-            android:exported="true">
-            <intent-filter>
-                <!-- Receive from xDrip and Juggluco -->
-                <action android:name="com.eveningoutpost.dexdrip.BgEstimate" />
-                <!-- TODO: Support more glucose sources -->
-            </intent-filter>
-        </receiver>
 
     </application>
 

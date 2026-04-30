@@ -1,19 +1,17 @@
-package de.dh.raaps.interop
+package de.dh.raaps.plugin.glucose.receiver
 
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
-import de.dh.raaps.MainApplication
 import de.dh.raaps.core.api.data.BgReading
 import de.dh.raaps.core.api.data.BgSampleKind
 import de.dh.raaps.core.api.data.BgValue
 import de.dh.raaps.core.api.data.RawBg
 import de.dh.raaps.core.api.data.Timestamp
-import de.dh.raaps.plugin.glucose.receiver.ReceiverGlucosePlugin
 import kotlin.math.round
 import kotlin.time.Duration.Companion.days
 
-class DataReceiver: BroadcastReceiver() {
+class DataReceiver : BroadcastReceiver() {
     override fun onReceive(context: Context, intent: Intent) {
         processIntent(context, intent)
     }
@@ -53,8 +51,8 @@ class DataReceiver: BroadcastReceiver() {
                     )
                 }
                 if (timestampMs > 0) {
-                    val receiverPlugin: ReceiverGlucosePlugin? = MainApplication.instance.glucosePlugin as? ReceiverGlucosePlugin
-                    receiverPlugin?.injectReading(mapRawXDripValues(rawValue))
+                    val pluginInstance = ReceiverGlucosePlugin.instance
+                    pluginInstance?.injectReading(mapRawXDripValues(rawValue))
                 }
             }
         }
