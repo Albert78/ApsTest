@@ -8,6 +8,8 @@ package de.dh.raaps.core.api.data
 value class Timestamp(val ms: Long) : Comparable<Timestamp> {
     override fun compareTo(other: Timestamp): Int = ms.compareTo(other.ms)
 
+    operator fun minus(other: Timestamp): Long = ms - other.ms
+
     companion object {
         fun now(): Timestamp  = Timestamp(System.currentTimeMillis())
     }

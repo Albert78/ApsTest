@@ -13,6 +13,10 @@ value class Minutes(val value: Short) : Comparable<Minutes> {
 
     operator fun plus(other: Minutes) = Minutes((value + other.value).toShort())
 
+    fun inMs(): Long {
+        return value * 60L * 1000L
+    }
+
     companion object {
         val ONE_HOUR = Minutes(MINUTES_PER_HOUR.toShort())
         val ONE_DAY = Minutes(MINUTES_PER_DAY.toShort())

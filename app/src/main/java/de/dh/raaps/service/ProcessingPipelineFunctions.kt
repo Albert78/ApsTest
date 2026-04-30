@@ -15,6 +15,7 @@ import de.dh.raaps.data.DataRepository
 import de.dh.raaps.model.SavitzkyGolayFilterWin5Order2
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.filter
+import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.transform
@@ -49,12 +50,17 @@ fun Flow<BgReading>.persist(
  * encountered within each tick is emitted, while subsequent readings in the same interval
  * are discarded.
  *
+ * Attention: This simple sampling function won't work well for timestamps around the tick borders
+ * with a bit of jitter. If e.g. the timestamps modulo our tick borders are allmost 0, and the
+ * sequence of timestamps are not absolutely equidistant, samples will fall into one or the following
+ * tick slot. This will leave some slots empty while others are populated with two values.
+ *
  * @param tickInterval The interval size of the returned sample grid in minutes.
  * @return A Flow of Pairs containing:
  *         - [BgReading]: The original BgReading.
  *         - [Tick]: The Tick containing the zero-based index of the sample.
  */
-fun Flow<BgReading>.sampleValidValuesByTick(tickInterval: Minutes): Flow<Pair<BgReading, Tick>> {
+fun Flow<BgReading>.sampleByTick(tickInterval: Minutes): Flow<Pair<BgReading, Tick>> {
     var lastTick = Tick(-1)
     val tickSizeMs: Long = tickInterval.value * 60L * 1000L
 
@@ -68,6 +74,69 @@ fun Flow<BgReading>.sampleValidValuesByTick(tickInterval: Minutes): Flow<Pair<Bg
                 false
             }
         }
+}
+
+/**
+ * Downsamples the data stream by aligning readings to fixed time intervals (ticks) using a stable
+ * sampling algorithm.
+ *
+ * It works like this:
+ * - Slot index is computed by simple integer division.
+ * - Slot centers are phase-shifted so the first value lies exactly
+ *   in the center of its slot.
+ * - Jitter is suppressed by stable slot assignment.
+ * - Last 10 slot-center errors are averaged.
+ * - If average absolute error exceeds threshold, phase is re-initialized
+ *   around the current value.
+ * - No gap filling: missing slots are simply skipped.
+ * - Duplicate slots are suppressed (only first emitted value per slot).
+ */
+fun Flow<BgReading>.sampleByTickStable(
+    tickInterval: Minutes,
+    errorWindowSize: Int = 10,
+    reinitThresholdMs: Long = 10_000L
+): Flow<Pair<BgReading, Tick>> = flow {
+    var initialized = false
+    var offsetMs = 0L
+    var lastTick: Tick? = null
+
+    val tickIntervalMs = tickInterval.inMs()
+    val errors = ArrayList<Long>()
+
+    fun centerOn(timestamp: Timestamp) {
+        val phase = timestamp.ms % tickIntervalMs
+        offsetMs = tickIntervalMs / 2 - phase
+        errors.clear()
+        initialized = true
+    }
+
+    collect { bg ->
+        if (!initialized) {
+            centerOn(bg.timestamp)
+        }
+
+        val tick = Tick(((bg.timestamp.ms + offsetMs) / tickIntervalMs).toInt())
+        val slotCenter = Timestamp(tick.value * tickIntervalMs + tickIntervalMs / 2 - offsetMs)
+        val error = bg.timestamp - slotCenter
+
+        errors.addLast(error)
+        while (errors.size > errorWindowSize) {
+            errors.removeFirst()
+        }
+
+        if (lastTick != tick) {
+            emit(Pair(bg, tick))
+            lastTick = tick
+        }
+
+        if (errors.size == errorWindowSize) {
+            val avgError = errors.sum() / errors.size
+
+            if (abs(avgError) > reinitThresholdMs) {
+                centerOn(bg.timestamp)
+            }
+        }
+    }
 }
 
 fun Flow<Pair<BgReading, Tick>>.fillGaps(tickInterval: Minutes): Flow<Pair<BgReading, Tick>> {
@@ -157,23 +226,16 @@ private fun calculateSavitzkyGolayEndBorder3(window: List<BgReading>): BgValue {
     return BgValue.fromMgDl(sum.toInt())
 }
 
-/**
- * Smart glucose smoothing for readings in a 5-minute interval.
- * Since we rely on values of a good quality in the last 15 minutes for APS core, we apply a
- * quicker responding filter for readings in a 5-minute interval. See the implementation
- * for details.
- * This function dynamically switches between algorithms based on data quality.
- */
-fun Flow<BgReading>.smoothGlucoseSmart_5_Minute_Readings(): Flow<SmoothedBgSample> {
-    val tickIntervalSize = Minutes(5)
-    val windowSize = 3
-    val weightSlope: Double = 0.7
-    val maxDeviationMgDl: Int = 15
-    val windowMs = windowSize.toLong() * 60 * 1000L
+fun Flow<BgReading>.smoothGlucoseSmart(
+    tickIntervalSize: Minutes = Minutes(5),
+    windowSize: Int = 3,
+    sgMaxDeviationMgDl: Int
+): Flow<SmoothedBgSample> {
+    val ptwmaWeightSlope = 0.7
+    val windowMs = windowSize.toLong() * tickIntervalSize.inMs()
 
     val history = mutableListOf<BgReading>() // Indexed by Tick index
-    return sampleValidValuesByTick(tickIntervalSize)
-        // TODO: Should we align the samples to a fixed grid or are the readings typically equidistant?
+    return sampleByTickStable(tickIntervalSize)
         .fillGaps(tickIntervalSize)
         .map { (current, _) ->
             val nowMs = current.timestamp.ms
@@ -198,48 +260,35 @@ fun Flow<BgReading>.smoothGlucoseSmart_5_Minute_Readings(): Flow<SmoothedBgSampl
             val sgValue = if (isNValidValues(history, 3)) {
                 val smoothed = calculateSavitzkyGolayEndBorder3(history)
                 // If SG deviates too much from the raw current value, don't use this filter (outlier protection)
-                if (abs(smoothed.mgdl - current.value.mgdl) > maxDeviationMgDl) null else smoothed
+                if (abs(smoothed.mgdl - current.value.mgdl) > sgMaxDeviationMgDl) null else smoothed
             } else null
 
             // Fallback to PTWMA if deviation was too high or if we have invalid values
-            val smoothedValue = sgValue ?: calculatePTWMA(history, windowStartMs, windowMs, weightSlope)
+            val smoothedValue = sgValue ?: calculatePTWMA(history, windowStartMs, windowMs, ptwmaWeightSlope)
             if (smoothedValue != null) current.smoothTo(smoothedValue) else SmoothedBgSample.plainValue(current)
         }
 }
 
 /**
+ * Smart glucose smoothing for readings in a 5-minute interval.
+ * This function dynamically switches between algorithms based on data quality.
+ */
+fun Flow<BgReading>.smoothGlucoseSmart_5_Minute_Readings(): Flow<SmoothedBgSample> {
+    return smoothGlucoseSmart(
+        tickIntervalSize = Minutes(5),
+        windowSize = 3,
+        sgMaxDeviationMgDl = 15
+    )
+}
+
+/**
  * Smart glucose smoothing for readings in a 1-minute interval.
- * This function smoothes the last value according to a PTWMA smoothing regarding a 10 minutes interval.
+ * This function dynamically switches between algorithms based on data quality.
  */
 fun Flow<BgReading>.smoothGlucoseSmart_1_Minute_Readings(): Flow<SmoothedBgSample> {
-    val tickIntervalSize = Minutes(1)
-    val windowSize = 10
-    val weightSlope: Double = 0.7
-    val windowMs = windowSize.toLong() * 60 * 1000L
-
-    val history = mutableListOf<BgReading>() // Indexed by Tick index
-    return sampleValidValuesByTick(tickIntervalSize)
-        // TODO: Should we align the samples to a fixed grid or are the readings typically equidistant?
-        .fillGaps(tickIntervalSize)
-        .map { (current, _) ->
-            val nowMs = current.timestamp.ms
-            val windowStartMs = nowMs - windowMs
-
-            // Clean up old history
-            history.add(current)
-            for (i in 0 until history.size - windowSize) {
-                history.removeAt(0)
-            }
-
-            if (current.sampleKind != BgSampleKind.Value) {
-                return@map SmoothedBgSample.plainValue(current)
-            }
-
-            // -------------------------
-            // Filter orchestrator
-            // -------------------------
-
-            val smoothedValue = calculatePTWMA(history, windowStartMs, windowMs, weightSlope)
-            if (smoothedValue != null) current.smoothTo(smoothedValue) else SmoothedBgSample.plainValue(current)
-        }
+    return smoothGlucoseSmart(
+        tickIntervalSize = Minutes(1),
+        windowSize = 10,
+        sgMaxDeviationMgDl = 3
+    )
 }
