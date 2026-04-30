@@ -1,5 +1,6 @@
 package de.dh.raaps.model
 
+import android.util.Log
 import de.dh.raaps.core.api.DataProvider
 import de.dh.raaps.core.api.GlucosePlugin
 import de.dh.raaps.core.api.data.BgReadingsInterval
@@ -29,6 +30,8 @@ class APSCore(
     // State
     val rollingHistory: ApsRollingHistory = loadRollingHistory(dataRepository)
     var currentBg: SmoothedBgSample? = null
+        private set
+    var lastBg: SmoothedBgSample? = null
         private set
 
     /**
@@ -103,6 +106,8 @@ class APSCore(
      */
     suspend fun updateBg(bg: SmoothedBgSample) {
         busyWork {
+            Log.d(TAG, "Got new BG in APS Core: $bg")
+            lastBg = currentBg
             currentBg = bg
             val tick = rollingHistory.tick(bg.timestamp)
             val lastAnchorTick = rollingHistory.anchorTick
@@ -138,5 +143,9 @@ class APSCore(
     private fun loadRollingHistory(dataRepository: DataRepository): ApsRollingHistory {
         // TODO: Load from DB or initialize empty
         return ApsRollingHistory(historyHours = 10, tickDuration = Minutes(5))
+    }
+
+    companion object {
+        val TAG = APSCore::class.simpleName
     }
 }

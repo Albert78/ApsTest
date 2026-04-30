@@ -1,5 +1,6 @@
 package de.dh.raaps.service
 
+import android.util.Log
 import de.dh.raaps.core.api.DataProvider
 import de.dh.raaps.core.api.data.BgReading
 import de.dh.raaps.core.api.data.BgSampleKind
@@ -48,30 +49,31 @@ fun Flow<BgReading>.persist(
  * encountered within each tick is emitted, while subsequent readings in the same interval
  * are discarded.
  *
- * @param tickIntervalSize The interval size of the returned sample grid in minutes.
+ * @param tickInterval The interval size of the returned sample grid in minutes.
  * @return A Flow of Pairs containing:
  *         - [BgReading]: The original BgReading.
  *         - [Tick]: The Tick containing the zero-based index of the sample.
  */
-fun Flow<BgReading>.sampleValidValuesByTick(tickIntervalSize: Minutes): Flow<Pair<BgReading, Tick>> {
+fun Flow<BgReading>.sampleValidValuesByTick(tickInterval: Minutes): Flow<Pair<BgReading, Tick>> {
     var lastTick = Tick(-1)
-    val tickSizeMs = tickIntervalSize.value * 60 * 1000
+    val tickSizeMs: Long = tickInterval.value * 60L * 1000L
 
-    return map { it to Tick((it.timestamp.ms  / tickSizeMs).toInt()) }
+    return map { it to Tick((it.timestamp.ms / tickSizeMs).toInt()) }
         .filter { (bg, tick) ->
             if (tick != lastTick) {
                 lastTick = tick
                 true
             } else {
+                Log.i("BG ProcessingPipeline", "Skipping entry in the same tick: $bg, tick=$tick, lastTick=$lastTick")
                 false
             }
         }
 }
 
-fun Flow<Pair<BgReading, Tick>>.fillGaps(tickIntervalSize: Minutes): Flow<Pair<BgReading, Tick>> {
+fun Flow<Pair<BgReading, Tick>>.fillGaps(tickInterval: Minutes): Flow<Pair<BgReading, Tick>> {
     var lastTickValue: Int? = null
     var lastBgTimestamp: Timestamp = Timestamp(0)
-    val tickSizeMs = tickIntervalSize.value.toLong() * 60 * 1000L
+    val tickSizeMs = tickInterval.value.toLong() * 60 * 1000L
 
     return transform { (bg, tick) ->
         val currentTickValue = tick.value
@@ -134,7 +136,7 @@ private fun calculatePTWMA(
     if (weightTotal <= 0) {
         return null
     }
-    return BgValue((weightedSum / weightTotal).toInt().toShort())
+    return BgValue.fromMgDl((weightedSum / weightTotal).toInt())
 }
 
 /**
@@ -152,7 +154,7 @@ private fun calculateSavitzkyGolayEndBorder3(window: List<BgReading>): BgValue {
     val sum = window[window.size - 3].value.mgdl * coeffs[0] + // Center the coeffs at the 3rd value from behind
             window[window.size - 2].value.mgdl * coeffs[1] +
             window[window.size - 1].value.mgdl * (coeffs[2] + coeffs[3] + coeffs[4]) // Use the last entry for the right part of the filter coeffs
-    return BgValue(sum.toInt().toShort())
+    return BgValue.fromMgDl(sum.toInt())
 }
 
 /**
@@ -210,7 +212,7 @@ fun Flow<BgReading>.smoothGlucoseSmart_5_Minute_Readings(): Flow<SmoothedBgSampl
  * This function smoothes the last value according to a PTWMA smoothing regarding a 10 minutes interval.
  */
 fun Flow<BgReading>.smoothGlucoseSmart_1_Minute_Readings(): Flow<SmoothedBgSample> {
-    val tickIntervalSize = Minutes(5)
+    val tickIntervalSize = Minutes(1)
     val windowSize = 10
     val weightSlope: Double = 0.7
     val windowMs = windowSize.toLong() * 60 * 1000L

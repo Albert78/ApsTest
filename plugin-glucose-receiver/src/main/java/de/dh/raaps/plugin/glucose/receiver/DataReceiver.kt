@@ -41,7 +41,7 @@ class DataReceiver : BroadcastReceiver() {
                     }
                 }
                 val rawValue = RawBg(
-                    BgValue(valueMgDl.toInt().toShort()),
+                    BgValue.fromMgDl(valueMgDl.toInt()),
                     Timestamp(timestampMs)
                 )
                 fun mapRawXDripValues(raw: RawBg): BgReading {

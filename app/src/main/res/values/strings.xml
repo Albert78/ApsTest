@@ -56,7 +56,5 @@
     <string name="preferences_screen_title">Einstellungen</string>
 
     <string name="aps_service_notification_channel_name">RAAPS Service</string>
-    <string name="aps_service_notification_title">RAAPS wird ausgeführt</string>
     <string name="aps_service_notification_content_no_value_yet">Kein Glukosewert</string>
-    <string name="aps_service_notification_content_value">Glucose: %1$s</string>
 </resources>

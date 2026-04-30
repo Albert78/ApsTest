@@ -143,4 +143,8 @@ class APS(
     fun getCurrentBg(): SmoothedBgSample? {
         return core.currentBg
     }
+
+    fun getLastBg(): SmoothedBgSample? {
+        return core.lastBg
+    }
 }

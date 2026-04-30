@@ -1,6 +1,7 @@
 package de.dh.raaps
 
 import android.app.Application
+import android.app.ForegroundServiceStartNotAllowedException
 import android.content.Intent
 import androidx.core.content.ContextCompat
 import de.dh.raaps.data.DataRepository
@@ -67,7 +68,15 @@ class MainApplication : Application() {
 
     fun startApsService() {
         val intent = Intent(this, ApsService::class.java)
-        ContextCompat.startForegroundService(this, intent)
+        try {
+            ContextCompat.startForegroundService(this, intent)
+        } catch (e: ForegroundServiceStartNotAllowedException) {
+            // Android 12+ may throw ForegroundServiceStartNotAllowedException
+            // if called from background without proper exemptions (like ignoring battery optimizations).
+            // TODO: Handle
+        } catch (e: IllegalStateException) {
+            // TODO: Handle
+        }
     }
 
     fun installNotificationUpdater() {

@@ -1,24 +1,28 @@
 package de.dh.raaps.notifications
 
-import de.dh.raaps.core.api.ToDo
-import de.dh.raaps.core.api.data.GlucoseUnit
+import de.dh.raaps.core.api.data.BgSampleKind
+import de.dh.raaps.core.api.data.BgValue
 import de.dh.raaps.core.api.data.SmoothedBgSample
 import de.dh.raaps.model.APS
 
 data class ApsNotificationData(
-    val bgValue: SmoothedBgSample?,
-    val unit: GlucoseUnit
+    val lastBgSample: SmoothedBgSample?,
+    val secondToLastBgSample: SmoothedBgSample?
 ) {
-    fun getBgValueAsString(): String? {
-        val bg = bgValue ?: return null
-        return "${bg.origValue.mgdl} -> ${bg.smoothedValue.mgdl} mg/dl"
+    fun getBgDelta(): BgValue? {
+        if (lastBgSample == null || lastBgSample.sampleKind != BgSampleKind.Value
+            || secondToLastBgSample == null || secondToLastBgSample.sampleKind != BgSampleKind.Value
+        ) {
+            return null
+        }
+        return BgValue.fromMgDl(lastBgSample.origValue.mgdl - secondToLastBgSample.origValue.mgdl)
     }
 
     companion object {
         fun create(aps: APS): ApsNotificationData {
-            val latestBg = aps.getCurrentBg()
-            ToDo.toBeImplemented("Take glucose unit from preferences")
-            return ApsNotificationData(latestBg, GlucoseUnit.MG_DL)
+            val lastBg = aps.getCurrentBg()
+            val secondToLastBg = aps.getLastBg()
+            return ApsNotificationData(lastBg, secondToLastBg)
         }
     }
 }
