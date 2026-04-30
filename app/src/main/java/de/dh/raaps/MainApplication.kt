@@ -3,11 +3,9 @@ package de.dh.raaps
 import android.app.Application
 import android.content.Intent
 import androidx.core.content.ContextCompat
-import de.dh.raaps.core.api.GlucosePlugin
-import de.dh.raaps.core.api.PumpPlugin
 import de.dh.raaps.data.DataRepository
 import de.dh.raaps.data.db.AppDatabase
-import de.dh.raaps.model.ApsState
+import de.dh.raaps.model.APS
 import de.dh.raaps.notifications.ApsNotificationData
 import de.dh.raaps.notifications.ApsNotificationManager
 import de.dh.raaps.plugin.glucose.receiver.ReceiverGlucosePlugin
@@ -27,10 +25,8 @@ class MainApplication : Application() {
         private set
     lateinit var dataRepository: DataRepository
         private set
-    lateinit var apsState: ApsState
+    lateinit var aps: APS
         private set
-    var glucosePlugin: GlucosePlugin? = null
-    var pumpPlugin: PumpPlugin? = null
 
     val applicationScope = CoroutineScope(SupervisorJob() + Dispatchers.Main)
 
@@ -46,29 +42,18 @@ class MainApplication : Application() {
         val appDatabase = AppDatabase.getInstance(this)
         dataRepository = DataRepository(appDatabase)
 
-        // TODO: Use plugin manager for dynamically starting plugins
-        glucosePlugin = ReceiverGlucosePlugin(this)
-        glucosePlugin?.start(this)
-
-        pumpPlugin = SamplePumpPlugin()
-        pumpPlugin?.start(this)
+        startApsService()
 
         // TODO: Decouple initialization of APS system
-        apsState = ApsState(dataRepository)
-        startApsService()
+        aps = APS(dataRepository)
+        aps.pumpPlugin = SamplePumpPlugin()
+        aps.glucosePlugin = ReceiverGlucosePlugin(this)
 
         installNotificationUpdater()
     }
 
     override fun onTerminate() {
-        glucosePlugin?.let {
-            it.stop()
-            glucosePlugin = null
-        }
-        pumpPlugin?.let {
-            it.stop()
-            pumpPlugin = null
-        }
+        aps.stop()
         applicationScope.cancel()
         super.onTerminate()
     }
@@ -84,8 +69,8 @@ class MainApplication : Application() {
 
     fun installNotificationUpdater() {
         applicationScope.launch {
-            apsState.lastDataTime.collect { timestamp ->
-                val notificationData = ApsNotificationData.create(apsState)
+            aps.lastDataTime.collect { timestamp ->
+                val notificationData = ApsNotificationData.create(aps)
                 notificationManager.updateNotification(notificationData)
             }
         }

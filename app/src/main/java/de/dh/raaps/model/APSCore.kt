@@ -9,22 +9,24 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 
 /**
- * The core state of the APS system. Contains the rolling window of history values and other
- * data for calculation.
+ * The computation core of the APS system.
+ * This class is NOT thread-safe by itself and must be called from a controlled threading environment (like APS facade).
  */
-class ApsState(
+class APSCore(
     val dataRepository: DataRepository
 ) {
+    // State
     val rollingHistory: ApsRollingHistory = loadRollingHistory(dataRepository)
     var currentBg: SmoothedBgSample? = null
+        private set
 
-    // Emits the timestamp of the last state to all observers (e.g. UI)
+    // Observers (Updated by the core, read by the facade/UI)
     private val _lastDataTime = MutableStateFlow<Timestamp>(Timestamp(0))
     val lastDataTime: StateFlow<Timestamp> = _lastDataTime.asStateFlow()
 
-    // TODO: Triggers for pump commands as flow or something
-    // TODO: Triggers for UI updates as flow
-
+    /**
+     * Processes a new glucose reading.
+     */
     suspend fun updateBg(bg: SmoothedBgSample) {
         currentBg = bg
         val tick = rollingHistory.tick(bg.timestamp)
@@ -37,14 +39,15 @@ class ApsState(
         _lastDataTime.emit(bg.timestamp)
     }
 
+    /**
+     * Core therapy calculation logic.
+     */
     fun recalculate() {
-        // TODO
+        // TODO: Implement therapy algorithm (IOB, COB, Prediction, Temp Basal)
     }
 
-    companion object {
-        fun loadRollingHistory(dataRepository: DataRepository): ApsRollingHistory {
-            // TODO: Load from DB or initialize empty
-            return ApsRollingHistory(historyHours = 10, tickDuration = Minutes(5))
-        }
+    private fun loadRollingHistory(dataRepository: DataRepository): ApsRollingHistory {
+        // TODO: Load from DB or initialize empty
+        return ApsRollingHistory(historyHours = 10, tickDuration = Minutes(5))
     }
 }

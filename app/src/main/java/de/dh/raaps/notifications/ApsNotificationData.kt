@@ -3,7 +3,7 @@ package de.dh.raaps.notifications
 import de.dh.raaps.core.api.ToDo
 import de.dh.raaps.core.api.data.GlucoseUnit
 import de.dh.raaps.core.api.data.SmoothedBgSample
-import de.dh.raaps.model.ApsState
+import de.dh.raaps.model.APS
 
 data class ApsNotificationData(
     val bgValue: SmoothedBgSample?,
@@ -15,8 +15,8 @@ data class ApsNotificationData(
     }
 
     companion object {
-        fun create(apsState: ApsState): ApsNotificationData {
-            val latestBg = apsState.currentBg
+        fun create(aps: APS): ApsNotificationData {
+            val latestBg = aps.currentBg
             ToDo.toBeImplemented("Take glucose unit from preferences")
             return ApsNotificationData(latestBg, GlucoseUnit.MG_DL)
         }
