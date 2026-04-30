@@ -16,10 +16,14 @@ import kotlinx.coroutines.flow.asSharedFlow
  * The receiver will dynamically be registered on [start] and [stop] calls.
  */
 class ReceiverGlucosePlugin(
-    val application: Application
+    val application: Application,
+    val externalSourceType: ExternalSourceType
 ) : GlucosePlugin {
     override val name: String = "Receiver Glucose Plugin"
-    override val dataProviderType: String = "Glucose"
+    override val readingsInterval = externalSourceType.readingsInterval
+    override val readingsTimeDelay = externalSourceType.readingsTimeDelay
+    override val dataProviderType: String = "Glucose $readingsInterval"
+
     val dataReceiver: DataReceiver = DataReceiver()
 
     override fun start(application: Application) {

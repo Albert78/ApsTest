@@ -8,6 +8,7 @@ import de.dh.raaps.data.db.AppDatabase
 import de.dh.raaps.model.APS
 import de.dh.raaps.notifications.ApsNotificationData
 import de.dh.raaps.notifications.ApsNotificationManager
+import de.dh.raaps.plugin.glucose.receiver.ExternalSourceType
 import de.dh.raaps.plugin.glucose.receiver.ReceiverGlucosePlugin
 import de.dh.raaps.plugin.pump.SamplePumpPlugin
 import de.dh.raaps.service.ApsService
@@ -15,6 +16,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 
@@ -30,7 +32,7 @@ class MainApplication : Application() {
 
     val applicationScope = CoroutineScope(SupervisorJob() + Dispatchers.Main)
 
-    private val _isServiceRunning = kotlinx.coroutines.flow.MutableStateFlow(false)
+    private val _isServiceRunning = MutableStateFlow(false)
     val isServiceRunning = _isServiceRunning.asStateFlow()
 
     override fun onCreate() {
@@ -45,9 +47,10 @@ class MainApplication : Application() {
         startApsService()
 
         // TODO: Decouple initialization of APS system
-        aps = APS(dataRepository)
+        aps = APS(this, dataRepository)
+        // TODO: Read plugins from preferences
         aps.pumpPlugin = SamplePumpPlugin()
-        aps.glucosePlugin = ReceiverGlucosePlugin(this)
+        aps.glucosePlugin = ReceiverGlucosePlugin(this, ExternalSourceType.xDrip1Min)
 
         installNotificationUpdater()
     }

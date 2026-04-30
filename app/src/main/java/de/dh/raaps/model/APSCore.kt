@@ -13,6 +13,7 @@ import de.dh.raaps.service.smoothGlucoseSmart_5_Minute_Readings
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.map
 
 /**
  * The computation core of the APS system.
@@ -30,6 +31,13 @@ class APSCore(
     var currentBg: SmoothedBgSample? = null
         private set
 
+    /**
+     * Time delay between a glucose value in blood and the announced Timestamp of the bg reading.
+     * Typically, the announced timestamp represents the time of measure of the CGM system, which
+     * is about 5 minutes behind blood glucose.
+     */
+    var glucoseReadingsTimeDelay: Minutes = Minutes(0)
+
     // Signal to the facade that the core is currently performing critical work. If the
     // busy state is bigger than 0, the core is working and needs a wake lock.
     private val _busyState = MutableStateFlow(0)
@@ -41,25 +49,46 @@ class APSCore(
     suspend fun installGlucosePipeline(
         plugin: GlucosePlugin,
         dataProvider: DataProvider,
-        sensorType: SensorType,
-        readingsInterval: BgReadingsInterval
+        sensorType: SensorType
     ) {
-        // TODO: Save changes in readings interval (5 minutes to 1 minutes and vice versa)
+        val readingsInterval = plugin.readingsInterval
+        val datasourceTimeDelay = plugin.readingsTimeDelay
+        // TODO: Save changes in readings interval (5 minutes to 1 minutes and vice versa) to database
 
         // Persist values
         val persistedValues = plugin.getValues()
             .persist(dataRepository, dataProvider, sensorType)
 
-        // Smooth values
-        val smoothedValues = when (readingsInterval) {
+        // Smooth values.
+        // filterTimeDelay could be used if we apply a filter which will emit the smoothed
+        // value with a delay, e.g. for extremely noisy values.
+        val (smoothedValues, filterTimeDelay) = when (readingsInterval) {
             BgReadingsInterval.OneMinute ->
-                persistedValues
-                    .smoothGlucoseSmart_1_Minute_Readings()
+                // More aggressive smoothing to get better values
+                Pair(
+                    persistedValues
+                        .smoothGlucoseSmart_1_Minute_Readings(),
+                    Minutes(0)
+                )
 
             BgReadingsInterval.FiveMinutes ->
-                persistedValues
-                    .smoothGlucoseSmart_5_Minute_Readings()
+                // Less smoothing to avoid additional delay of values
+                Pair(
+                    persistedValues
+                        .smoothGlucoseSmart_5_Minute_Readings(),
+                    Minutes(0)
+                )
+
+            BgReadingsInterval.AdHoc ->
+                // No smoothing at all
+                Pair(
+                    persistedValues
+                        .map { SmoothedBgSample.plainValue(it) },
+                    Minutes(0)
+                )
         }
+
+        glucoseReadingsTimeDelay = datasourceTimeDelay + filterTimeDelay
 
         // Collect for core calculation
         smoothedValues

@@ -6,6 +6,7 @@ import de.dh.raaps.core.api.data.BgReading
 import de.dh.raaps.core.api.data.BgReadingsInterval
 import de.dh.raaps.core.api.data.BgSampleKind
 import de.dh.raaps.core.api.data.BgValue
+import de.dh.raaps.core.api.data.Minutes
 import de.dh.raaps.core.api.data.RawBg
 import de.dh.raaps.core.api.data.Timestamp
 import kotlinx.coroutines.delay
@@ -19,8 +20,10 @@ class SampleCgmPlugin : GlucosePlugin {
 
     override val dataProviderType: String = "CGM"
 
-    override val readingsInterval: Any
+    override val readingsInterval: BgReadingsInterval
         get() = BgReadingsInterval.OneMinute
+
+    override val readingsTimeDelay = Minutes(5)
 
     override fun getSensorTypeName() = "Libre3"
 

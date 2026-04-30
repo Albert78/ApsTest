@@ -101,9 +101,8 @@ class APS(
         val sensorType = dataRepository.getOrCreateSensorTypeByName(plugin.getSensorTypeName())
         val dataProvider =
             dataRepository.getOrCreateDataProviderByName(plugin.name, plugin.dataProviderType)
-        val readingsInterval = plugin.readingsInterval
 
-        core.installGlucosePipeline(plugin, dataProvider, sensorType, readingsInterval)
+        core.installGlucosePipeline(plugin, dataProvider, sensorType)
     }
 
     private fun emitDataUpdateEvent() {

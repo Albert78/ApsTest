@@ -11,6 +11,8 @@ import de.dh.raaps.core.api.MINUTES_PER_HOUR
 value class Minutes(val value: Short) : Comparable<Minutes> {
     override fun compareTo(other: Minutes): Int = value.compareTo(other.value)
 
+    operator fun plus(other: Minutes) = Minutes((value + other.value).toShort())
+
     companion object {
         val ONE_HOUR = Minutes(MINUTES_PER_HOUR.toShort())
         val ONE_DAY = Minutes(MINUTES_PER_DAY.toShort())
