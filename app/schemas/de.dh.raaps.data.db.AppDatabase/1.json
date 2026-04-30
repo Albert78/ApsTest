@@ -2,7 +2,7 @@
   "formatVersion": 1,
   "database": {
     "version": 1,
-    "identityHash": "e62afa905b5d79ed498b79f2977adfe9",
+    "identityHash": "a1c11f133c702fa028aced94eb0637b4",
     "entities": [
       {
         "tableName": "sensor_type",
@@ -60,7 +60,7 @@
       },
       {
         "tableName": "glucose_reading",
-        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `value_mgdl` INTEGER NOT NULL, `sampleKind` TEXT NOT NULL, `timestamp_ms` INTEGER NOT NULL, `fk_data_provider` INTEGER NOT NULL, `fk_source_sensor` INTEGER NOT NULL, FOREIGN KEY(`fk_source_sensor`) REFERENCES `sensor_type`(`id`) ON UPDATE NO ACTION ON DELETE NO ACTION , FOREIGN KEY(`fk_data_provider`) REFERENCES `data_provider`(`id`) ON UPDATE NO ACTION ON DELETE NO ACTION )",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `value_mgdl` INTEGER NOT NULL, `sample_kind` TEXT NOT NULL, `timestamp_ms` INTEGER NOT NULL, `fk_data_provider` INTEGER NOT NULL, `fk_source_sensor` INTEGER NOT NULL, FOREIGN KEY(`fk_source_sensor`) REFERENCES `sensor_type`(`id`) ON UPDATE NO ACTION ON DELETE NO ACTION , FOREIGN KEY(`fk_data_provider`) REFERENCES `data_provider`(`id`) ON UPDATE NO ACTION ON DELETE NO ACTION )",
         "fields": [
           {
             "fieldPath": "id",
@@ -75,8 +75,8 @@
             "notNull": true
           },
           {
-            "fieldPath": "sampleKind",
-            "columnName": "sampleKind",
+            "fieldPath": "sample_kind",
+            "columnName": "sample_kind",
             "affinity": "TEXT",
             "notNull": true
           },
@@ -186,7 +186,7 @@
     ],
     "setupQueries": [
       "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
-      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, 'e62afa905b5d79ed498b79f2977adfe9')"
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, 'a1c11f133c702fa028aced94eb0637b4')"
     ]
   }
 }

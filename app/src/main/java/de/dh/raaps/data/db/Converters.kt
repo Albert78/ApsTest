@@ -9,7 +9,7 @@ import de.dh.raaps.data.db.entities.SensorTypeEntity
 
 fun BgReading.toNewEntity(dataProviderId: Long, sourceSensorId: Long) = GlucoseReadingEntity(
     value_mgdl = this.value.mgdl,
-    sampleKind = this.sampleKind,
+    sample_kind = this.sampleKind,
     timestamp_ms = this.timestamp.ms,
     fk_data_provider = dataProviderId,
     fk_source_sensor = sourceSensorId
@@ -36,4 +36,3 @@ fun DataProviderEntity.toModel() = DataProvider(
     name = this.name,
     type = this.type
 )
-

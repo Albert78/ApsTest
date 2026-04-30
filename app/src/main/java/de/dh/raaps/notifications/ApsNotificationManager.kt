@@ -46,15 +46,15 @@ class ApsNotificationManager(
     }
 
     private fun notify(notificationId: Int, notification: Notification) {
-        if (canPostNotifications(context)) {
-            try {
-                manager.notify(notificationId, notification)
-                return
-            } catch (e: SecurityException) {
-                // Fallback to log message below
-            }
+        if (!canPostNotifications(context)) {
+            Log.w(TAG, "Missing permissions to show notification")
+            return
         }
-        Log.w(TAG, "Missing permissions to show due reminders notification")
+        try {
+            manager.notify(notificationId, notification)
+        } catch (e: SecurityException) {
+            // Fallback to log message below
+        }
     }
 
     companion object {

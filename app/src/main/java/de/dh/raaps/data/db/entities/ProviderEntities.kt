@@ -54,9 +54,8 @@ data class GlucoseReadingEntity(
     @PrimaryKey(autoGenerate = true)
     val id: Long = ID_UNDEFINED,
     val value_mgdl: Short,
-    val sampleKind: BgSampleKind,
+    val sample_kind: BgSampleKind,
     val timestamp_ms: Long,
     val fk_data_provider: Long,
     val fk_source_sensor: Long
 )
-

@@ -59,7 +59,7 @@ class DataReceiver : BroadcastReceiver() {
                     )
                 }
                 if (timestampMs > 0) {
-                    pluginInstance?.injectReading(mapRawXDripValues(rawValue))
+                    pluginInstance.injectReading(mapRawXDripValues(rawValue))
                 }
             }
         }
