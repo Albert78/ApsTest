@@ -3,7 +3,7 @@ plugins {
 }
 
 android {
-    namespace = "de.dh.apstest.plugin.pump"
+    namespace = "de.dh.raaps.plugin.pump"
     compileSdk = 37
 
     defaultConfig {

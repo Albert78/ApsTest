@@ -3,7 +3,7 @@ plugins {
 }
 
 android {
-    namespace = "de.dh.apstest.core.api"
+    namespace = "de.dh.raaps.core.api"
     compileSdk = 37
 
     defaultConfig {

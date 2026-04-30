@@ -11,11 +11,11 @@ room {
 }
 
 android {
-    namespace = "de.dh.apstest"
+    namespace = "de.dh.raaps"
     compileSdk = 37
 
     defaultConfig {
-        applicationId = "de.dh.apstest"
+        applicationId = "de.dh.raaps"
         minSdk = 35
         targetSdk = 37
         versionCode = 1
