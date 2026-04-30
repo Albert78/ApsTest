@@ -7,12 +7,17 @@ import de.dh.raaps.core.api.data.BgValue
 import de.dh.raaps.core.api.data.Minutes
 import de.dh.raaps.core.api.data.SensorType
 import de.dh.raaps.core.api.data.SmoothedBgSample
+import de.dh.raaps.core.api.data.Tick
+import de.dh.raaps.core.api.data.Timestamp
 import de.dh.raaps.core.api.data.smoothTo
 import de.dh.raaps.data.DataRepository
+import de.dh.raaps.model.SavitzkyGolayFilterWin5Order2
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onEach
+import kotlinx.coroutines.flow.transform
+import kotlin.math.abs
 
 /**
  * Persists each [BgReading] emitted by the flow to the persistent storage.
@@ -36,62 +41,203 @@ fun Flow<BgReading>.persist(
 }
 
 /**
- * Advanced smoothing for blood glucose samples using a Parametrized, Time-Weighted Moving Average (PTWMA)
- * to reduce sensor noise while preserving trends.
+ * Downsamples the data stream by aligning readings to fixed time intervals (ticks).
  *
- * This filter uses a trapezoidal time-window to weight samples.
+ * This function divides the timeline into fixed buckets of a specified duration,
+ * anchored to midnight at start of the epoch. It ensures that only the first reading
+ * encountered within each tick is emitted, while subsequent readings in the same interval
+ * are discarded.
  *
- * 1. Ignores INVALID samples.
- * 2. Treats HIGH/LOW as floor/ceiling values to maintain urgent safety states.
- * 3. Applies a weighted average where weights decay based on sample age.
- *
- * @param windowSize The look-back duration (e.g., 10 minutes). A larger window increases
- *                   smoothness but also adds lag to trend detection.
- * @param weightSlope Controls the "aggressiveness" of the time-decay (0.0 to 1.0):
- *                    - 0.0: Constant weight (Simple Moving Average). Maximum smoothing,
- *                           but highest lag.
- *                    - 1.0: Linear decay starting from zero at window edge (Triangular window).
- *                           High responsiveness to new data, ignores very old data.
- *                    - 0.7 (Default): Balanced trapezoidal weight. Reduces noise while
- *                           keeping the trend responsive.
+ * @param tickIntervalSize The interval size of the returned sample grid in minutes.
+ * @return A Flow of Pairs containing:
+ *         - [BgReading]: The original BgReading.
+ *         - [Tick]: The Tick containing the zero-based index of the sample.
  */
-fun Flow<BgReading>.smoothGlucosePTWMA(windowSize: Minutes = Minutes(10), weightSlope: Double = 0.7): Flow<SmoothedBgSample> {
-    val history = mutableListOf<BgReading>()
-    val windowMs = windowSize.value.toLong() * 60 * 1000L
+fun Flow<BgReading>.sampleValidValuesByTick(tickIntervalSize: Minutes): Flow<Pair<BgReading, Tick>> {
+    var lastTick = Tick(-1)
+    val tickSizeMs = tickIntervalSize.value * 60 * 1000
 
-    return filter { it.sampleKind != BgSampleKind.Invalid }
-        .map { current ->
+    return map { it to Tick((it.timestamp.ms  / tickSizeMs).toInt()) }
+        .filter { (bg, tick) ->
+            if (tick != lastTick) {
+                lastTick = tick
+                true
+            } else {
+                false
+            }
+        }
+}
+
+fun Flow<Pair<BgReading, Tick>>.fillGaps(tickIntervalSize: Minutes): Flow<Pair<BgReading, Tick>> {
+    var lastTickValue: Int? = null
+    var lastBgTimestamp: Timestamp = Timestamp(0)
+    val tickSizeMs = tickIntervalSize.value.toLong() * 60 * 1000L
+
+    return transform { (bg, tick) ->
+        val currentTickValue = tick.value
+
+        if (lastTickValue != null) {
+            // Fill all ticks between last and current
+            for (gapTick in (lastTickValue!! + 1) until currentTickValue) {
+                // Align at previous reading's time
+                val gapTimestamp = Timestamp(lastBgTimestamp.ms + tickSizeMs)
+                val invalidReading = BgReading(
+                    value = BgValue(0),
+                    sampleKind = BgSampleKind.Invalid,
+                    timestamp = gapTimestamp
+                )
+                emit(invalidReading to Tick(gapTick))
+            }
+        }
+
+        lastTickValue = currentTickValue
+        lastBgTimestamp = bg.timestamp
+        emit(bg to tick)
+    }
+}
+
+/**
+ * Checks if the last [n] samples in history are all valid values.
+ */
+private fun isNValidValues(history: List<BgReading>, n: Int): Boolean {
+    if (history.size < n) return false
+    for (i in history.size - n until history.size - 1) {
+        if (history[i].sampleKind == BgSampleKind.Invalid) {
+            return false
+        }
+    }
+    return true
+}
+
+/**
+ * Implementation of Parametrized Time-Weighted Moving Average.
+ * If there aren't enough valid values in the given window, this method returns [null], else it
+ * returns the PTWMA-smoothed value.
+ */
+private fun calculatePTWMA(
+    history: List<BgReading>,
+    windowStartMs: Long,
+    windowMs: Long,
+    weightSlope: Double
+): BgValue? {
+    var weightedSum = 0.0
+    var weightTotal = 0.0
+
+    history.forEach { sample ->
+        if (sample.sampleKind != BgSampleKind.Invalid) {
+            val weight = weightSlope * (sample.timestamp.ms - windowStartMs) + (1.0 - weightSlope) * windowMs
+            weightedSum += sample.value.mgdl * weight
+            weightTotal += weight
+        }
+    }
+
+    if (weightTotal <= 0) {
+        return null
+    }
+    return BgValue((weightedSum / weightTotal).toInt().toShort())
+}
+
+/**
+ * Smoothes the last value in the given window based on a Savitzky-Golay filter (Window 5, Order 2)
+ * with special treating for the end border.
+ * Operates on the last 3 values of the provided list.
+ */
+private fun calculateSavitzkyGolayEndBorder3(window: List<BgReading>): BgValue {
+    val coeffs = SavitzkyGolayFilterWin5Order2.COEFFS
+    // We want the smoothed value for the LAST point, so we cannot apply all 5 coeffs.
+    // -> Border treatment for the filter: Center the coeffs at the last entry in the window
+    // (at this time we need the smoothed value) and use the last window entry (the most current one)
+    // for the last three coeffs. This border treatment seems to be a good compromise.
+    // TODO: Describe behavior of this border treatment
+    val sum = window[window.size - 3].value.mgdl * coeffs[0] + // Center the coeffs at the 3rd value from behind
+            window[window.size - 2].value.mgdl * coeffs[1] +
+            window[window.size - 1].value.mgdl * (coeffs[2] + coeffs[3] + coeffs[4]) // Use the last entry for the right part of the filter coeffs
+    return BgValue(sum.toInt().toShort())
+}
+
+/**
+ * Smart glucose smoothing for readings in a 5-minute interval.
+ * Since we rely on values of a good quality in the last 15 minutes for APS core, we apply a
+ * quicker responding filter for readings in a 5-minute interval. See the implementation
+ * for details.
+ * This function dynamically switches between algorithms based on data quality.
+ */
+fun Flow<BgReading>.smoothGlucoseSmart_5_Minute_Readings(): Flow<SmoothedBgSample> {
+    val tickIntervalSize = Minutes(5)
+    val windowSize = 3
+    val weightSlope: Double = 0.7
+    val maxDeviationMgDl: Int = 15
+    val windowMs = windowSize.toLong() * 60 * 1000L
+
+    val history = mutableListOf<BgReading>() // Indexed by Tick index
+    return sampleValidValuesByTick(tickIntervalSize)
+        // TODO: Should we align the samples to a fixed grid or are the readings typically equidistant?
+        .fillGaps(tickIntervalSize)
+        .map { (current, _) ->
             val nowMs = current.timestamp.ms
             val windowStartMs = nowMs - windowMs
 
-            // Remove history values outside our window
-            history.removeAll { it.timestamp.ms < windowStartMs }
+            // Maintain a sliding window of the last 3 samples.
+            history.add(current)
+            for (i in 0 until history.size - windowSize) {
+                history.removeAt(0)
+            }
 
             if (current.sampleKind != BgSampleKind.Value) {
-                // If it's HIGH or LOW, don't smooth it with normal values
-                // to maintain the urgent nature of the reading.
-                SmoothedBgSample.plainValue(current)
-            } else {
-                // Only add real numerical values to the smoothing history
-                history.add(current)
-
-                // Time-Weighted Moving Average: Newer values have more weight based on their age
-                var weightedSum = 0.0
-                var weightTotal = 0.0
-
-                history.forEach { sample ->
-                    // slope: 1.0 = linear descending until 0, 0.0 = constant (Simple Moving Average, SMA)
-                    val weight = weightSlope * (sample.timestamp.ms - windowStartMs) + (1.0 - weightSlope) * windowMs
-                    weightedSum += sample.value.mgdl * weight
-                    weightTotal += weight
-                }
-
-                if (weightTotal > 0) {
-                    val smoothedMgDl = (weightedSum / weightTotal).toInt()
-                    current.smoothTo(BgValue.fromMgDl(smoothedMgDl))
-                } else {
-                    SmoothedBgSample.plainValue(current)
-                }
+                return@map SmoothedBgSample.plainValue(current)
             }
+
+            // -------------------------
+            // Filter orchestrator
+            // -------------------------
+
+            // If the window is completely filled with valid values:
+            // Try Savitzky-Golay (our version requires exactly 3 contiguous valid samples)
+            val sgValue = if (isNValidValues(history, 3)) {
+                val smoothed = calculateSavitzkyGolayEndBorder3(history)
+                // If SG deviates too much from the raw current value, don't use this filter (outlier protection)
+                if (abs(smoothed.mgdl - current.value.mgdl) > maxDeviationMgDl) null else smoothed
+            } else null
+
+            // Fallback to PTWMA if deviation was too high or if we have invalid values
+            val smoothedValue = sgValue ?: calculatePTWMA(history, windowStartMs, windowMs, weightSlope)
+            if (smoothedValue != null) current.smoothTo(smoothedValue) else SmoothedBgSample.plainValue(current)
+        }
+}
+
+/**
+ * Smart glucose smoothing for readings in a 1-minute interval.
+ * This function smoothes the last value according to a PTWMA smoothing regarding a 10 minutes interval.
+ */
+fun Flow<BgReading>.smoothGlucoseSmart_1_Minute_Readings(): Flow<SmoothedBgSample> {
+    val tickIntervalSize = Minutes(5)
+    val windowSize = 10
+    val weightSlope: Double = 0.7
+    val windowMs = windowSize.toLong() * 60 * 1000L
+
+    val history = mutableListOf<BgReading>() // Indexed by Tick index
+    return sampleValidValuesByTick(tickIntervalSize)
+        // TODO: Should we align the samples to a fixed grid or are the readings typically equidistant?
+        .fillGaps(tickIntervalSize)
+        .map { (current, _) ->
+            val nowMs = current.timestamp.ms
+            val windowStartMs = nowMs - windowMs
+
+            // Clean up old history
+            history.add(current)
+            for (i in 0 until history.size - windowSize) {
+                history.removeAt(0)
+            }
+
+            if (current.sampleKind != BgSampleKind.Value) {
+                return@map SmoothedBgSample.plainValue(current)
+            }
+
+            // -------------------------
+            // Filter orchestrator
+            // -------------------------
+
+            val smoothedValue = calculatePTWMA(history, windowStartMs, windowMs, weightSlope)
+            if (smoothedValue != null) current.smoothTo(smoothedValue) else SmoothedBgSample.plainValue(current)
         }
 }

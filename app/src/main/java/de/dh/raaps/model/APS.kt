@@ -4,12 +4,9 @@ import android.content.Context
 import android.os.PowerManager
 import de.dh.raaps.core.api.GlucosePlugin
 import de.dh.raaps.core.api.PumpPlugin
-import de.dh.raaps.core.api.data.Minutes
 import de.dh.raaps.core.api.data.SmoothedBgSample
 import de.dh.raaps.core.api.data.Timestamp
 import de.dh.raaps.data.DataRepository
-import de.dh.raaps.service.persist
-import de.dh.raaps.service.smoothGlucosePTWMA
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -40,7 +37,10 @@ class APS(
     private val wakeLock = powerManager.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, "raaps:ApsCoreLock")
 
     // Computation Core: Pure logic and state, completely thread-agnostic
-    private val core = APSCore(dataRepository, { emitDataUpdateEvent() })
+    private val core = APSCore(
+        dataRepository,
+        { emitDataUpdateEvent() }
+    )
 
     // Plugins & Active Jobs
     private var glucoseJob: Job? = null
@@ -70,11 +70,11 @@ class APS(
     }
 
     private fun installWakeLockManager() {
-        // Collect isBusy signal on a separate scope to ensure it's not blocked by core calculation
+        // Collect busy state on a separate scope to ensure it's not blocked by core calculation
         apsScope.launch(Dispatchers.Default) {
-            core.isBusy.collect { busy ->
-                if (busy) {
-                    if (!wakeLock.isHeld) wakeLock.acquire(30_000) // 30s safety timeout
+            core.busyState.collect { busyState ->
+                if (busyState > 0) {
+                    if (!wakeLock.isHeld) wakeLock.acquire(5_000) // 5s safety timeout
                 } else {
                     if (wakeLock.isHeld) {
                         try {
@@ -101,14 +101,9 @@ class APS(
         val sensorType = dataRepository.getOrCreateSensorTypeByName(plugin.getSensorTypeName())
         val dataProvider =
             dataRepository.getOrCreateDataProviderByName(plugin.name, plugin.dataProviderType)
+        val readingsInterval = plugin.readingsInterval
 
-        plugin.getValues()
-            .persist(dataRepository, dataProvider, sensorType)
-            .smoothGlucosePTWMA(windowSize = Minutes(5), weightSlope = 0.7)
-            .collect { bg ->
-                // Since this runs within apsScope, we call the core directly
-                core.updateBg(bg)
-            }
+        core.installGlucosePipeline(plugin, dataProvider, sensorType, readingsInterval)
     }
 
     private fun emitDataUpdateEvent() {

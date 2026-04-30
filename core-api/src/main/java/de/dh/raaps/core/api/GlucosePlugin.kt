@@ -7,6 +7,7 @@ import kotlinx.coroutines.flow.Flow
 interface GlucosePlugin {
     val name: String
     val dataProviderType: String
+    val readingsInterval: Any
     fun getSensorTypeName(): String
     fun getValues(): Flow<BgReading>
 
