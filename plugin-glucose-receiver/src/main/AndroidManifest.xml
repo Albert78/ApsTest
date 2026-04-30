@@ -7,8 +7,8 @@
     <application>
         <!-- Receive new BG readings from other local apps -->
         <!--
-          It's necessary to declare the receiver here, although the actual receiver is
-          declared dynamically. This is because apps like Juggluco finds other apps reacting to
+          It's necessary to declare the receiver here, instead of registering it dynamically.
+          This is because apps like Juggluco finds other apps reacting to
           the specified action via the packet manager (as of April 2026)
         -->
         <receiver

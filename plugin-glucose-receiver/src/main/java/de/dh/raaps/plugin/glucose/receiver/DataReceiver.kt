@@ -19,14 +19,13 @@ class DataReceiver : BroadcastReceiver() {
     fun processIntent(context: Context, intent: Intent) {
         val bundle = intent.extras ?: return
 
-        val pluginInstance = ReceiverGlucosePlugin.instance
+        val pluginInstance = ReceiverGlucosePlugin.instance ?: return
         when (intent.action) {
             Intents.XDRIP_ACTION_BG_ESTIMATE -> {
                 // Sanity check: Don't receive values from source which is not configured
-                if (pluginInstance == null
-                    || (pluginInstance.externalSourceType != ExternalSourceType.xDrip1Min
-                        && pluginInstance.externalSourceType != ExternalSourceType.xDrip5Min)
-                ) return
+                if (pluginInstance.externalSourceType != ExternalSourceType.xDrip1Min
+                    && pluginInstance.externalSourceType != ExternalSourceType.xDrip5Min)
+                    return
 
                 val timestampMs = bundle.getLong(Intents.XDRIP_EXTRA_TIMESTAMP, 0)
                 val valueMgDl = round(bundle.getDouble(Intents.XDRIP_EXTRA_BG_ESTIMATE, 0.0))

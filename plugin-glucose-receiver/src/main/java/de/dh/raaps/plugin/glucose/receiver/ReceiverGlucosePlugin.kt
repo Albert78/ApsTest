@@ -31,12 +31,16 @@ class ReceiverGlucosePlugin(
             throw IllegalStateException("Plugin ${ReceiverGlucosePlugin::class.simpleName} is already started")
         }
         instance = this
-        registerReceiver()
+        // The receiver is registered via AndroidManifest.xml. This is necessary for other apps
+        // to find our receiver via the packet manager (used by Juggluco).
+        // Drawback: Receivers registered via Manifest don't receive broadcasts with implicit intents,
+        // what does xDrip?
+        //registerReceiver()
     }
 
     override fun stop() {
         instance = null
-        unregisterReceiver()
+        //unregisterReceiver()
     }
 
     private fun registerReceiver() {

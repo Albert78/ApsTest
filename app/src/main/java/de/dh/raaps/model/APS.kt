@@ -105,7 +105,6 @@ class APS(
         val sensorType = dataRepository.getOrCreateSensorTypeByName(plugin.getSensorTypeName())
         val dataProvider =
             dataRepository.getOrCreateDataProviderByName(plugin.name, plugin.dataProviderType)
-
         core.installGlucosePipeline(plugin, dataProvider, sensorType)
     }
 
