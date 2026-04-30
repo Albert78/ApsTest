@@ -1,5 +1,7 @@
 package de.dh.raaps.model
 
+import android.content.Context
+import android.os.PowerManager
 import de.dh.raaps.core.api.GlucosePlugin
 import de.dh.raaps.core.api.PumpPlugin
 import de.dh.raaps.core.api.data.Minutes
@@ -26,11 +28,16 @@ import java.util.concurrent.Executors
  * on a single background thread.
  */
 class APS(
+    val context: Context,
     val dataRepository: DataRepository
 ) {
     // Threading: Single background thread to avoid race conditions in the core logic
     private val apsDispatcher = Executors.newSingleThreadExecutor().asCoroutineDispatcher()
     private val apsScope = CoroutineScope(apsDispatcher + SupervisorJob())
+
+    // Power Management
+    private val powerManager = context.getSystemService(Context.POWER_SERVICE) as PowerManager
+    private val wakeLock = powerManager.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, "raaps:ApsCoreLock")
 
     // Computation Core: Pure logic and state, completely thread-agnostic
     private val core = APSCore(dataRepository, { emitDataUpdateEvent() })
@@ -58,7 +65,27 @@ class APS(
     val lastDataTime: StateFlow<Timestamp> = _lastDataTime.asStateFlow()
 
     init {
+        installWakeLockManager()
         restartGlucosePipeline()
+    }
+
+    private fun installWakeLockManager() {
+        // Collect isBusy signal on a separate scope to ensure it's not blocked by core calculation
+        apsScope.launch(Dispatchers.Default) {
+            core.isBusy.collect { busy ->
+                if (busy) {
+                    if (!wakeLock.isHeld) wakeLock.acquire(30_000) // 30s safety timeout
+                } else {
+                    if (wakeLock.isHeld) {
+                        try {
+                            wakeLock.release()
+                        } catch (e: RuntimeException) {
+                            // Ignore if already released
+                        }
+                    }
+                }
+            }
+        }
     }
 
     private fun restartGlucosePipeline() {

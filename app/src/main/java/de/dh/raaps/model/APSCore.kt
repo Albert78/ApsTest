@@ -3,10 +3,16 @@ package de.dh.raaps.model
 import de.dh.raaps.core.api.data.Minutes
 import de.dh.raaps.core.api.data.SmoothedBgSample
 import de.dh.raaps.data.DataRepository
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 
 /**
  * The computation core of the APS system.
  * This class is NOT thread-safe by itself and must be called from a controlled threading environment (like APS facade).
+ * This class should remain (almost) free of workarounds for the Android system.
+ * We only need to signal the internal calculation state by setting the [isBusy] flag. The surrounding app
+ * is responsible for acquiring a wake lock.
  */
 class APSCore(
     val dataRepository: DataRepository,
@@ -17,19 +23,25 @@ class APSCore(
     var currentBg: SmoothedBgSample? = null
         private set
 
+    // Signal to the facade that the core is currently performing critical work
+    private val _isBusy = MutableStateFlow(false)
+    val isBusy: StateFlow<Boolean> = _isBusy.asStateFlow()
+
     /**
      * Processes a new glucose reading.
      */
-    fun updateBg(bg: SmoothedBgSample) {
-        currentBg = bg
-        val tick = rollingHistory.tick(bg.timestamp)
-        val lastAnchorTick = rollingHistory.anchorTick
-        val tickState = rollingHistory.getApsTickState(tick, true) ?: return
-        tickState.bg = bg
-        if (tick != lastAnchorTick) {
-            recalculate()
+    suspend fun updateBg(bg: SmoothedBgSample) {
+        withBusySignal {
+            currentBg = bg
+            val tick = rollingHistory.tick(bg.timestamp)
+            val lastAnchorTick = rollingHistory.anchorTick
+            val tickState = rollingHistory.getApsTickState(tick, true) ?: return@withBusySignal
+            tickState.bg = bg
+            if (tick != lastAnchorTick) {
+                recalculate()
+            }
+            onDataUpdated()
         }
-        onDataUpdated()
     }
 
     /**
@@ -37,6 +49,15 @@ class APSCore(
      */
     fun recalculate() {
         // TODO: Implement therapy algorithm (IOB, COB, Prediction, Temp Basal)
+    }
+
+    private suspend fun <T> withBusySignal(block: suspend () -> T): T {
+        _isBusy.value = true
+        try {
+            return block()
+        } finally {
+            _isBusy.value = false
+        }
     }
 
     private fun loadRollingHistory(dataRepository: DataRepository): ApsRollingHistory {
