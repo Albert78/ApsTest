@@ -42,6 +42,7 @@ import de.dh.raaps.ui.icons.Backup
 import de.dh.raaps.ui.icons.Config_Outline
 import de.dh.raaps.ui.icons.Restore
 import de.dh.raaps.ui.icons.Theme_Light_Dark
+import de.dh.raaps.ui.theme.ApsTheme
 
 // Menu and header icons
 val Menu_More = Icons.Default.MoreVert
@@ -78,6 +79,10 @@ private data class IconPreview(
 )
 
 private val iconsForPreview = listOf(
+    IconPreview("Menu_More", Menu_More),
+    IconPreview("Menu_Delete", Menu_Delete),
+    IconPreview("Icon_Screen_Back", Icon_Screen_Back),
+    IconPreview("Icon_Screen_Close", Icon_Screen_Close),
     IconPreview("Add", Icon_Add),
     IconPreview("Edit", Icon_Edit),
     IconPreview("Info", Icon_Info),
@@ -105,7 +110,7 @@ private val iconsForPreview = listOf(
 @Preview(showBackground = true, widthDp = 320, heightDp = 1400, name = "Icon Catalog")
 @Composable
 fun IconCatalogPreview() {
-    _root_ide_package_.de.dh.raaps.ui.theme.ApsTheme {
+    ApsTheme {
         Surface {
             LazyColumn(
                 modifier = Modifier.padding(16.dp),
@@ -140,4 +145,3 @@ fun IconCatalogPreview() {
         }
     }
 }
-
