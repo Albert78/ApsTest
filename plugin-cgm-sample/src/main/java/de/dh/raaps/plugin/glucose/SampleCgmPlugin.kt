@@ -1,6 +1,5 @@
 package de.dh.raaps.plugin.glucose
 
-import android.app.Application
 import de.dh.raaps.core.api.GlucosePlugin
 import de.dh.raaps.core.api.data.BgReading
 import de.dh.raaps.core.api.data.BgReadingsInterval
@@ -27,7 +26,7 @@ class SampleCgmPlugin : GlucosePlugin {
 
     override fun getSensorTypeName() = "Libre3"
 
-    override fun start(application: Application) {
+    override fun start() {
         // Nothing to do
     }
 

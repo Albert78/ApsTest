@@ -1,6 +1,5 @@
 package de.dh.raaps.plugin.pump
 
-import android.app.Application
 import de.dh.raaps.core.api.PumpPlugin
 import de.dh.raaps.core.api.ToDo
 
@@ -9,7 +8,7 @@ class SamplePumpPlugin : PumpPlugin {
 
     // TODO
 
-    override fun start(application: Application) {
+    override fun start() {
         ToDo.toBeImplemented("SamplePumpPlugin")
     }
 

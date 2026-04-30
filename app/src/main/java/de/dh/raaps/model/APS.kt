@@ -46,14 +46,18 @@ class APS(
     private var glucoseJob: Job? = null
     var glucosePlugin: GlucosePlugin? = null
         set(value) {
+            field?.stop()
             field = value
+            field?.start()
             restartGlucosePipeline()
         }
 
     private var pumpJob: Job? = null
     var pumpPlugin: PumpPlugin? = null
         set(value) {
+            field?.stop()
             field = value
+            field?.start()
             // TODO: restart calculation or subscription for pump
         }
 
