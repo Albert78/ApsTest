@@ -6,6 +6,7 @@ import android.content.IntentFilter
 import android.util.Log
 import de.dh.raaps.core.api.GlucosePlugin
 import de.dh.raaps.core.api.data.BgReading
+import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.asSharedFlow
@@ -45,17 +46,18 @@ class ReceiverGlucosePlugin(
 
     override fun getSensorTypeName() = "External Receiver"
 
-    private val _readings = MutableSharedFlow<BgReading>(extraBufferCapacity = 64)
+    private val _readings = MutableSharedFlow<BgReading>(
+        extraBufferCapacity = 64,
+        onBufferOverflow = BufferOverflow.DROP_OLDEST
+    )
 
     /**
      * Values received by our BroadcastReceiver will go here.
      */
     fun injectReading(value: BgReading): Boolean {
-        val result = _readings.tryEmit(value)
-        if (!result) {
-            Log.w(TAG, "${ReceiverGlucosePlugin::class.simpleName} is unable to emit a new glucose reading due to a busy readings flow")
-        }
-        return result
+        // tryEmit will always succeed because DROP_OLDEST ensures there is always room
+        Log.d(TAG, "Getting new glucose reading: $value")
+        return _readings.tryEmit(value)
     }
 
     override fun getValues(): Flow<BgReading> {

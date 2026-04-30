@@ -7,4 +7,8 @@ package de.dh.raaps.core.api.data
 @JvmInline
 value class Timestamp(val ms: Long) : Comparable<Timestamp> {
     override fun compareTo(other: Timestamp): Int = ms.compareTo(other.ms)
+
+    companion object {
+        fun now(): Timestamp  = Timestamp(System.currentTimeMillis())
+    }
 }

@@ -16,7 +16,7 @@ data class ApsNotificationData(
 
     companion object {
         fun create(aps: APS): ApsNotificationData {
-            val latestBg = aps.currentBg
+            val latestBg = aps.getCurrentBg()
             ToDo.toBeImplemented("Take glucose unit from preferences")
             return ApsNotificationData(latestBg, GlucoseUnit.MG_DL)
         }

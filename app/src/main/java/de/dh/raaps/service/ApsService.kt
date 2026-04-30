@@ -10,6 +10,9 @@ import de.dh.raaps.model.APS
 import de.dh.raaps.notifications.ApsNotificationData
 import de.dh.raaps.notifications.ApsNotificationManager
 
+/**
+ * Foreground service for the RAAPS system. Makes the RAAPS process remain active with a high priority.
+ */
 class ApsService : Service() {
     private val notificationManager: ApsNotificationManager = MainApplication.instance.notificationManager
 

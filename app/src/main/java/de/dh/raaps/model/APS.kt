@@ -9,11 +9,14 @@ import de.dh.raaps.data.DataRepository
 import de.dh.raaps.service.persist
 import de.dh.raaps.service.smoothGlucosePTWMA
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.asCoroutineDispatcher
 import kotlinx.coroutines.cancel
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import java.util.concurrent.Executors
 
@@ -30,7 +33,7 @@ class APS(
     private val apsScope = CoroutineScope(apsDispatcher + SupervisorJob())
 
     // Computation Core: Pure logic and state, completely thread-agnostic
-    private val core = APSCore(dataRepository)
+    private val core = APSCore(dataRepository, { emitDataUpdateEvent() })
 
     // Plugins & Active Jobs
     private var glucoseJob: Job? = null
@@ -47,9 +50,12 @@ class APS(
             // TODO: restart calculation or subscription for pump
         }
 
-    // Observers: Exposed from the internal core
-    val lastDataTime: StateFlow<Timestamp> = core.lastDataTime
     val rollingHistory: ApsRollingHistory get() = core.rollingHistory
+
+    // Observers: Exposed from the internal core
+    // Observers (Updated by the core, read by the facade/UI)
+    private val _lastDataTime = MutableStateFlow<Timestamp>(Timestamp(0))
+    val lastDataTime: StateFlow<Timestamp> = _lastDataTime.asStateFlow()
 
     init {
         restartGlucosePipeline()
@@ -60,11 +66,11 @@ class APS(
         val plugin = glucosePlugin ?: return
 
         glucoseJob = apsScope.launch {
-            installGlucosePipeline(plugin)
+            installGlucosePipeline_ApsThread(plugin)
         }
     }
 
-    private suspend fun installGlucosePipeline(plugin: GlucosePlugin) {
+    private suspend fun installGlucosePipeline_ApsThread(plugin: GlucosePlugin) {
         val sensorType = dataRepository.getOrCreateSensorTypeByName(plugin.getSensorTypeName())
         val dataProvider =
             dataRepository.getOrCreateDataProviderByName(plugin.name, plugin.dataProviderType)
@@ -76,6 +82,12 @@ class APS(
                 // Since this runs within apsScope, we call the core directly
                 core.updateBg(bg)
             }
+    }
+
+    private fun emitDataUpdateEvent() {
+        apsScope.launch(Dispatchers.Default) {
+            _lastDataTime.emit(Timestamp.now())
+        }
     }
 
     /**
@@ -102,5 +114,9 @@ class APS(
         }
         apsScope.cancel()
         apsDispatcher.close()
+    }
+
+    fun getCurrentBg(): SmoothedBgSample? {
+        return core.currentBg
     }
 }

@@ -52,6 +52,15 @@ Nutze `stateMutex.withLock { ... }` in der `APS`-Fassade für alle Operationen, 
 
 1.  **Medizinische Logik / Zustandsänderung?** -> Implementierung im `APSCore`.
 2.  **Eintrittspunkt von außen?** -> Methode in `APS` hinzufügen, die in den `apsScope` wechselt.
-3.  **Wird in der Pipeline suspendiert?** -> Gesamten Block in `APS` mit der `stateMutex` absichern.
+3.  **Wird in der Pipeline suspendiert?** -> Gesamten Block in `APS` mit der `stateMutex` absichern. Siehe Hinweise unten.
 4.  **Daten für die UI?** -> `StateFlow` im Kern anlegen und durch die Fassade durchreichen.
 5.  **Ressourcen-Cleanup?** -> Sicherstellen, dass neue Hintergrund-Jobs in `APS.stop()` gecancelt werden.
+
+
+## Wichtige Hinweise
+
+### Suspend-Funktionen und Atomarität
+In diesem Kontext ist wichtig, dass Suspend-Funktionen **nicht atomar** sind, d.h. Kontext-/Threadwechsel innerhalb der Funktion zulassen.
+Wenn wir also die Threadsicherheit durch Single-Threading im Core garantieren wollen, muss auch der Aspekt der Atomarität
+berücksichtigt werden. Im Kern dürfen also Funktionen nur dann als "suspend" gekennzeichnet werden,
+wenn sie nicht atomar sein müssen oder durch ein umschließendes Lock geschützt sind.
