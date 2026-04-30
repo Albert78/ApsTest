@@ -11,12 +11,10 @@ import de.dh.apstest.core.api.data.SmoothedBgSample
 import de.dh.apstest.core.api.data.Tick
 import de.dh.apstest.core.api.data.smoothTo
 import de.dh.apstest.data.DataRepository
-import de.dh.apstest.model.ApsState
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onEach
-import kotlinx.coroutines.flow.scan
 
 /**
  * Persists each [BgReading] emitted by the flow to the persistent storage.
@@ -126,42 +124,4 @@ fun <T : HistoricalValue> Flow<T>.sampleByTick(tickIntervalSize: Minutes): Flow<
                 false
             }
         }
-}
-
-/**
- * Maintains a memory-efficient rolling window of APS states for a fixed duration.
- *
- * This implementation uses the Tick index to manage a fixed-size buffer.
- * For 10 hours of 5-minute ticks, it maintains exactly 120 slots.
- *
- * @param historyHours The total time window to keep (default 10).
- * @param tickIntervalSize The duration of one tick (default 5 minutes).
- */
-fun Flow<Pair<SmoothedBgSample, Tick>>.toRollingHistory(
-    historyHours: Int = 10,
-    tickIntervalSize: Minutes = Minutes(5)
-): Flow<List<ApsState?>> {
-    val capacity = (historyHours * 60) / tickIntervalSize.value
-    var lastTickValue = -1
-
-    return scan(arrayOfNulls<ApsState>(capacity)) { buffer, (bg, tick) ->
-        val currentTickValue = tick.value
-
-        if (lastTickValue != -1 && currentTickValue > lastTickValue) {
-            // 1. Fill gaps & clear old values:
-            // We clear all slots between the last and the current tick.
-            // This handles both real gaps (sensor outages) and the
-            // overwriting of 10-hour-old stale data.
-            val ticksToClear = (currentTickValue - lastTickValue).coerceAtMost(capacity)
-            for (i in 1 until ticksToClear) {
-                buffer[(lastTickValue + i) % capacity] = ApsState.empty(tick)
-            }
-        }
-
-        // 2. Set current value
-        buffer[currentTickValue % capacity] = ApsState(tick, bg)
-        lastTickValue = currentTickValue
-
-        buffer
-    }.map { it.toList() } // 3. Emit as List (snapshot for subsequent calculations)
 }

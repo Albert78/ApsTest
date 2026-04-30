@@ -18,7 +18,9 @@
     <string name="aps_dashboard_screen_title">APS Dashboard</string>
     <string name="menu_item_permissions_label">App-Berechtigungen</string>
     <string name="menu_item_preferences_label">Einstellungen</string>
-    <string name="menu_item_datamanagement_label">Datenverwaltung</string>
+
+    <string name="dashboard_permissions_missing">Für eine ordnungsgemäße Funktion benötigt die App weitere Berechtigungen</string>
+    <string name="dashboard_fix_permissions_link">Reparieren</string>
 
     <string name="error_app_settings_could_not_be_opened_message">Die App-Einstellungen konnten nicht geöffnet werden. Bitte öffnen Sie sie aus den Geräteeinstellungen.</string>
     <string name="error_battery_optimization_settings_could_not_be_opened_message">Die App-Einstellungen für die Batterie-Optimierung konnten nicht geöffnet werden. Bitte öffnen Sie sie aus den Geräteeinstellungen.</string>
@@ -52,4 +54,8 @@
     <string name="permissions_needed_fix_action">Reparieren</string>
 
     <string name="preferences_screen_title">Einstellungen</string>
+
+    <string name="aps_service_notification_channel_name">APS Service</string>
+    <string name="aps_service_notification_title">APS wird ausgeführt</string>
+    <string name="aps_service_notification_content">APS Test-Implementierung</string>
 </resources>

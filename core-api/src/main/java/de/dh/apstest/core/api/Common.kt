@@ -1,6 +1,6 @@
 package de.dh.apstest.core.api
 
-const val ID_UNDEFINED = -1L
+const val ID_UNDEFINED = 0L
 
 const val MINUTES_PER_HOUR = 60
 const val HOURS_PER_DAY = 24

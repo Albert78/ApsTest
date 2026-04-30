@@ -1,13 +1,17 @@
 package de.dh.apstest.service
 
+import android.app.Notification
 import android.app.Service
 import android.content.Intent
+import android.content.pm.ServiceInfo
 import android.os.IBinder
 import de.dh.apstest.MainApplication
 import de.dh.apstest.core.api.GlucosePlugin
 import de.dh.apstest.core.api.PumpPlugin
 import de.dh.apstest.core.api.data.Minutes
 import de.dh.apstest.data.DataRepository
+import de.dh.apstest.model.ApsState
+import de.dh.apstest.notifications.ApsNotificationManager
 import de.dh.apstest.plugin.cgm.SampleCgmPlugin
 import de.dh.apstest.plugin.pump.SamplePumpPlugin
 import kotlinx.coroutines.CoroutineScope
@@ -21,16 +25,38 @@ class ApsService : Service() {
 
     private lateinit var glucosePlugin: GlucosePlugin
     private lateinit var pumpPlugin: PumpPlugin
+    private val notificationManager: ApsNotificationManager = MainApplication.instance.notificationManager
 
     val dataRepository: DataRepository = MainApplication.instance.dataRepository
+    val apsState : ApsState = MainApplication.instance.apsState
 
     override fun onCreate() {
         super.onCreate()
+
+        notificationManager.createNotificationChannels()
+        startServiceInForeground()
+
         // Here we could use a plugin manager
         glucosePlugin = SampleCgmPlugin()
         pumpPlugin = SamplePumpPlugin()
 
         startObservation()
+    }
+
+    override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
+        startServiceInForeground()
+
+        return START_STICKY
+    }
+
+    private fun startServiceInForeground() {
+        val notification: Notification = notificationManager.createForegroundServiceNotification()
+
+        startForeground(
+            ApsNotificationManager.NOTIFICATION_ID,
+            notification,
+            ServiceInfo.FOREGROUND_SERVICE_TYPE_HEALTH
+        )
     }
 
     private fun startObservation() {
@@ -39,22 +65,13 @@ class ApsService : Service() {
             val dataProvider = dataRepository.getOrCreateDataProviderByName(glucosePlugin.name, glucosePlugin.dataProviderType)
             val tickIntervalSize = Minutes(5)
 
-            val values = glucosePlugin.getValues()
+            glucosePlugin.getValues()
                 .persist(dataRepository, dataProvider, sensorType)
                 .smoothGlucosePTWMA(windowSize = Minutes(5), weightSlope = 0.7)
                 .sampleByTick(tickIntervalSize = tickIntervalSize)
-                .toRollingHistory(historyHours = 10, tickIntervalSize = tickIntervalSize)
-            // Weiter:
-            // 5. weitere Berechnungen (COB, IOB, Sensitivity, Basal)
-            // 6. Ausgabe
-
-        }
-    }
-
-    private suspend fun runApsLogic(currentGlucose: Double) {
-        if (currentGlucose > 150.0) {
-            // Suggest or deliver correction bolus
-            pumpPlugin.deliverInsulin(0.1)
+                .collect { (bg, tick) ->
+                    apsState.updateBg(bg, tick)
+                }
         }
     }
 

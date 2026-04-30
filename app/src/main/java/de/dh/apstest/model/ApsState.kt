@@ -1,16 +1,36 @@
 package de.dh.apstest.model
 
+import de.dh.apstest.core.api.data.Minutes
 import de.dh.apstest.core.api.data.SmoothedBgSample
 import de.dh.apstest.core.api.data.Tick
+import de.dh.apstest.data.DataRepository
 
-data class ApsState(
-    val tick: Tick,
-    val glucose: SmoothedBgSample?,
-    val iob: Double = 0.0, // Insulin on Board
-    val cob: Double = 0.0, // Carbs on Board
-    val prediction: Double? = null
+/**
+ * The core state of the APS system. Contains the rolling window of history values and other
+ * data for calculation.
+ */
+class ApsState(
+    val dataRepository: DataRepository
 ) {
+    val rollingHistory: ApsRollingHistory = loadRollingHistory(dataRepository)
+
+    // TODO: Triggers for pump commands as flow or something
+    // TODO: Triggers for UI updates as flow
+
+    fun updateBg(bg: SmoothedBgSample, dataTick: Tick) {
+        val tickState = rollingHistory.getApsTickState(dataTick, true)
+        tickState?.bg = bg ?: return
+        recalculate()
+    }
+
+    fun recalculate() {
+        // TODO
+    }
+
     companion object {
-        fun empty(tick: Tick) = ApsState(tick = tick, glucose = null)
+        fun loadRollingHistory(dataRepository: DataRepository): ApsRollingHistory {
+            // TODO: Load from DB or initialize empty
+            return ApsRollingHistory(historyHours = 10, tickDuration = Minutes(5))
+        }
     }
 }

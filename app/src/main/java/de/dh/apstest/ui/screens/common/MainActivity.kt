@@ -53,8 +53,6 @@ import kotlinx.serialization.Serializable
 
 @Serializable object PreferencesMainRoute : NavKey
 
-@Serializable object DataManagementRoute : NavKey
-
 class MainActivity : ComponentActivity() {
     private lateinit var navViewModel: NavigationViewModel
     private lateinit var permissionsViewModel: PermissionsViewModel
@@ -119,8 +117,7 @@ class MainActivity : ComponentActivity() {
                         permissionsViewModel = permissionsViewModel,
                         onFixPermissions = { navViewModel.push(PermissionsRoute) },
                         onNavigateToPermissions = { navViewModel.push(PermissionsRoute) },
-                        onNavigateToPreferences = { navViewModel.push(PreferencesMainRoute) },
-                        onNavigateToDataManagement = { navViewModel.push(DataManagementRoute) }
+                        onNavigateToPreferences = { navViewModel.push(PreferencesMainRoute) }
                     )
                 }
 
@@ -129,6 +126,10 @@ class MainActivity : ComponentActivity() {
 
                     LifecycleEventEffect(Lifecycle.Event.ON_RESUME) {
                         permissionsViewModel.updateAppPermissions()
+
+                        lifecycleScope.launch(Dispatchers.IO) {
+                            application.triggerUpdatesAfterPermissionsChange()
+                        }
                     }
 
                     DisposableEffect(Unit) {

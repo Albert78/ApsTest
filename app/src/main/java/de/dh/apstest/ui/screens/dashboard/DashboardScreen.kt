@@ -1,18 +1,11 @@
 package de.dh.apstest.ui.screens.dashboard
 
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.MoreVert
-import androidx.compose.material3.Card
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
@@ -34,13 +27,14 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import de.dh.apstest.R
-import de.dh.apstest.ui.screens.common.shortDateTime
+import de.dh.apstest.ui.screens.permissions.PermissionStatus
 import de.dh.apstest.ui.screens.permissions.PermissionsUiModel
 import de.dh.apstest.ui.screens.permissions.PermissionsViewModel
+import de.dh.eventseries.ui.composables.WarningBanner
 import de.dh.eventseries.ui.composables.screenTitle
-import java.time.LocalDateTime
 
 @Composable
 fun DashboardScreen(
@@ -48,8 +42,7 @@ fun DashboardScreen(
     permissionsViewModel: PermissionsViewModel,
     onFixPermissions: () -> Unit,
     onNavigateToPermissions: () -> Unit,
-    onNavigateToPreferences: () -> Unit,
-    onNavigateToDataManagement: () -> Unit
+    onNavigateToPreferences: () -> Unit
 ) {
     val uiState by viewModel.uiState.collectAsState()
     val permissionsUiState by permissionsViewModel.uiState.collectAsState()
@@ -59,8 +52,7 @@ fun DashboardScreen(
         permissionsUiState = permissionsUiState,
         onFixPermissionsClick = onFixPermissions,
         onNavigateToPermissions = onNavigateToPermissions,
-        onNavigateToPreferences = onNavigateToPreferences,
-        onNavigateToDataManagement = onNavigateToDataManagement
+        onNavigateToPreferences = onNavigateToPreferences
     )
 }
 
@@ -71,8 +63,7 @@ fun DashboardContent(
     permissionsUiState: PermissionsUiModel,
     onFixPermissionsClick: () -> Unit,
     onNavigateToPermissions: () -> Unit,
-    onNavigateToPreferences: () -> Unit,
-    onNavigateToDataManagement: () -> Unit
+    onNavigateToPreferences: () -> Unit
 ) {
     val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior()
     var menuExpanded by remember { mutableStateOf(false) }
@@ -105,13 +96,6 @@ fun DashboardContent(
                                     onNavigateToPreferences()
                                 }
                             )
-                            DropdownMenuItem(
-                                text = { Text(stringResource(id = R.string.menu_item_datamanagement_label)) },
-                                onClick = {
-                                    menuExpanded = false
-                                    onNavigateToDataManagement()
-                                }
-                            )
                         }
                     }
                 },
@@ -142,47 +126,63 @@ fun DashboardContent(
                 )
             } else {
                 Column(modifier = Modifier.padding(16.dp)) {
+                    // Permissions warning header
+                    if (!permissionsUiState.isPermissionsConfigComplete) {
+                        WarningBanner(
+                            warningText = stringResource(id = R.string.dashboard_permissions_missing),
+                            actionText = stringResource(id = R.string.dashboard_fix_permissions_link),
+                            onActionClick = onFixPermissionsClick
+                        )
+                    }
+
                     Text(
-                        text = "Current Status: Running",
+                        text = "APS dashboard coming soon. In the meantime, have a look at the core data model!",
                         style = MaterialTheme.typography.bodyLarge
                     )
-
-                    Spacer(modifier = Modifier.height(24.dp))
-
-                    Text(
-                        text = "Recent Glucose Readings:",
-                        style = MaterialTheme.typography.titleMedium
-                    )
-
-                    LazyColumn(modifier = Modifier.fillMaxSize()) {
-//                        items(readings) { reading ->
-//                            GlucoseItem(reading)
-//                        }
-                        item {
-                            GlucoseItem(125.0, LocalDateTime.now())
-                        }
-                    }
                 }
             }
         }
     }
 }
 
+@Preview(showBackground = true)
 @Composable
-fun GlucoseItem(value: Double, time: LocalDateTime) {
-    Card(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(vertical = 4.dp)
-    ) {
-        Row(
-            modifier = Modifier
-                .padding(16.dp)
-                .fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween
-        ) {
-            Text(text = "${value} mg/dl")
-            Text(text = shortDateTime(time))
-        }
+fun DashboardPreview() {
+    MaterialTheme {
+        DashboardContent(
+            uiState = DashboardUiState(isLoading = false, isError = false),
+            permissionsUiState = PermissionsUiModel(
+                isLoading = false,
+                notificationPermissionStatus = PermissionStatus.Granted,
+                ignoreBatteryOptimizationPermissionStatus = PermissionStatus.Granted,
+                autoRevokePermissionsPermissionStatus = PermissionStatus.Granted,
+                numPermissionsMissing = 0,
+                permissionsMissingText = ""
+            ),
+            onFixPermissionsClick = {},
+            onNavigateToPermissions = {},
+            onNavigateToPreferences = {}
+        )
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+fun DashboardPermissionsWarningPreview() {
+    MaterialTheme {
+        DashboardContent(
+            uiState = DashboardUiState(isLoading = false, isError = false),
+            permissionsUiState = PermissionsUiModel(
+                isLoading = false,
+                notificationPermissionStatus = PermissionStatus.Denied,
+                ignoreBatteryOptimizationPermissionStatus = PermissionStatus.Granted,
+                autoRevokePermissionsPermissionStatus = PermissionStatus.Granted,
+                numPermissionsMissing = 1,
+                permissionsMissingText = "1 permission missing"
+            ),
+            onFixPermissionsClick = {},
+            onNavigateToPermissions = {},
+            onNavigateToPreferences = {}
+        )
     }
 }

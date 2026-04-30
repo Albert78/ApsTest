@@ -7,6 +7,7 @@ import androidx.room.Insert
 import androidx.room.Query
 import androidx.room.Room
 import androidx.room.RoomDatabase
+import androidx.room.TypeConverters
 import de.dh.apstest.data.db.entities.DataProviderEntity
 import de.dh.apstest.data.db.entities.GlucoseReadingEntity
 import de.dh.apstest.data.db.entities.SensorTypeEntity
@@ -49,6 +50,9 @@ interface ProvidersDao {
     // Therapy
     TherapyDataEntity::class
 ], version = 1)
+@TypeConverters(
+    DbTypeConverters::class
+)
 abstract class AppDatabase : RoomDatabase() {
     abstract fun providersDao(): ProvidersDao
 
