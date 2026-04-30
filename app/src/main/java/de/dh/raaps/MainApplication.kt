@@ -69,8 +69,8 @@ class MainApplication : Application() {
 
     fun installNotificationUpdater() {
         applicationScope.launch {
-            apsState.rollingHistory.state.collect { apsSnapshot ->
-                val notificationData = ApsNotificationData.create(apsSnapshot)
+            apsState.lastDataTime.collect { timestamp ->
+                val notificationData = ApsNotificationData.create(apsState)
                 notificationManager.updateNotification(notificationData)
             }
         }

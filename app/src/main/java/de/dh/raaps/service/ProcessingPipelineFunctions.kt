@@ -4,11 +4,9 @@ import de.dh.raaps.core.api.DataProvider
 import de.dh.raaps.core.api.data.BgReading
 import de.dh.raaps.core.api.data.BgSampleKind
 import de.dh.raaps.core.api.data.BgValue
-import de.dh.raaps.core.api.data.HistoricalValue
 import de.dh.raaps.core.api.data.Minutes
 import de.dh.raaps.core.api.data.SensorType
 import de.dh.raaps.core.api.data.SmoothedBgSample
-import de.dh.raaps.core.api.data.Tick
 import de.dh.raaps.core.api.data.smoothTo
 import de.dh.raaps.data.DataRepository
 import kotlinx.coroutines.flow.Flow
@@ -97,32 +95,3 @@ fun Flow<BgReading>.smoothGlucosePTWMA(windowSize: Minutes = Minutes(10), weight
             }
         }
 }
-
-/**
- * Downsamples the data stream by aligning readings to fixed time intervals (ticks).
- *
- * This function divides the timeline into fixed buckets of a specified duration,
- * anchored to midnight at start of the epoch. It ensures that only the first reading
- * encountered within each tick is emitted, while subsequent readings in the same interval
- * are discarded.
- *
- * @param tickIntervalSize The interval size of the returned sample grid in minutes.
- * @return A Flow of Pairs containing:
- *         - [T]: The original value (must implement HistoricalValue).
- *         - [Tick]: The zero-based index of the tick.
- */
-fun <T : HistoricalValue> Flow<T>.sampleByTick(tickIntervalSize: Minutes): Flow<Pair<T, Tick>> {
-    var lastTick = Tick(-1)
-    val tickSizeMs = tickIntervalSize.value * 60 * 1000
-
-    return map { it to Tick((it.timestamp.ms  / tickSizeMs).toInt()) }
-        .filter { (_, tick) ->
-            if (tick != lastTick) {
-                lastTick = tick
-                true
-            } else {
-                false
-            }
-        }
-}
-

@@ -59,7 +59,7 @@ class ApsService : Service() {
     }
 
     private fun startServiceInForeground() {
-        val apsNotificationData = ApsNotificationData.create(apsState.rollingHistory.getSnapshot())
+        val apsNotificationData = ApsNotificationData.create(apsState)
         val notification: Notification = notificationManager.createForegroundServiceNotification(apsNotificationData)
 
         startForeground(
@@ -90,9 +90,8 @@ class ApsService : Service() {
         glucosePlugin.getValues()
 //            .persist(dataRepository, dataProvider, sensorType)
             .smoothGlucosePTWMA(windowSize = Minutes(5), weightSlope = 0.7)
-            .sampleByTick(tickIntervalSize = tickIntervalSize)
-            .collect { (bg, tick) ->
-                apsState.updateBg(bg, tick)
+            .collect { bg ->
+                apsState.updateBg(bg)
             }
     }
 

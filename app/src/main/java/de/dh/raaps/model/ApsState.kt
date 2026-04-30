@@ -2,8 +2,11 @@ package de.dh.raaps.model
 
 import de.dh.raaps.core.api.data.Minutes
 import de.dh.raaps.core.api.data.SmoothedBgSample
-import de.dh.raaps.core.api.data.Tick
+import de.dh.raaps.core.api.data.Timestamp
 import de.dh.raaps.data.DataRepository
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 
 /**
  * The core state of the APS system. Contains the rolling window of history values and other
@@ -13,19 +16,29 @@ class ApsState(
     val dataRepository: DataRepository
 ) {
     val rollingHistory: ApsRollingHistory = loadRollingHistory(dataRepository)
+    var currentBg: SmoothedBgSample? = null
+
+    // Emits the timestamp of the last state to all observers (e.g. UI)
+    private val _lastDataTime = MutableStateFlow<Timestamp>(Timestamp(0))
+    val lastDataTime: StateFlow<Timestamp> = _lastDataTime.asStateFlow()
 
     // TODO: Triggers for pump commands as flow or something
     // TODO: Triggers for UI updates as flow
 
-    fun updateBg(bg: SmoothedBgSample, dataTick: Tick) {
-        val tickState = rollingHistory.getApsTickState(dataTick, true) ?: return
+    suspend fun updateBg(bg: SmoothedBgSample) {
+        currentBg = bg
+        val tick = rollingHistory.tick(bg.timestamp)
+        val lastAnchorTick = rollingHistory.anchorTick
+        val tickState = rollingHistory.getApsTickState(tick, true) ?: return
         tickState.bg = bg
-        recalculate()
+        if (tick != lastAnchorTick) {
+            recalculate()
+        }
+        _lastDataTime.emit(bg.timestamp)
     }
 
     fun recalculate() {
         // TODO
-        rollingHistory.publishState()
     }
 
     companion object {
@@ -35,4 +48,3 @@ class ApsState(
         }
     }
 }
-

@@ -2,9 +2,7 @@ package de.dh.raaps.model
 
 import de.dh.raaps.core.api.data.Minutes
 import de.dh.raaps.core.api.data.Tick
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asStateFlow
+import de.dh.raaps.core.api.data.Timestamp
 
 data class ApsHistorySnapshot(
     val ticks: List<ApsTickState?>
@@ -19,32 +17,33 @@ class ApsRollingHistory(
     private val buffer = arrayOfNulls<ApsTickState>(capacity)
 
     // The "Present": All data in the buffer is relative to this tick
-    private var anchorTick: Int = -1
+    var anchorTick: Tick = Tick.invalid()
 
-    // Emits the buffer as unmodifiable list to all observers (e.g. UI)
-    private val _state = MutableStateFlow<ApsHistorySnapshot>(getSnapshot())
-    val state: StateFlow<ApsHistorySnapshot> = _state.asStateFlow()
+    fun tick(timestamp: Timestamp): Tick {
+        val tickSizeMs = tickDuration.value * 60 * 1000
+
+        return Tick((timestamp.ms  / tickSizeMs).toInt())
+    }
 
     /**
      * Advances the history's timeframe to a new point in time.
      * Use this to move the "window" forward, e.g., every 5 minutes or on new data.
      */
     fun advanceTo(newAnchorTick: Tick) {
-        val newTickValue = newAnchorTick.value
-        if (anchorTick == -1) {
-            anchorTick = newTickValue
+        if (anchorTick == Tick.invalid()) {
+            anchorTick = newAnchorTick
+            buffer[bufferIndex(newAnchorTick)] = ApsTickState.empty()
             return
         }
 
-        if (newTickValue > anchorTick) {
+        if (newAnchorTick > anchorTick) {
             // Clear the slots that have become "stale" due to time advancing
-            val ticksToClear = (newTickValue - anchorTick).coerceAtMost(capacity)
+            val ticksToClear = (newAnchorTick.value - anchorTick.value).coerceAtMost(capacity)
             for (i in 1..ticksToClear) {
-                buffer[bufferIndex(Tick(anchorTick + i))] = ApsTickState.empty()
+                buffer[bufferIndex(Tick(anchorTick.value + i))] = ApsTickState.empty()
                 // TODO: Write ApsState to database
             }
-            anchorTick = newTickValue
-            publishState()
+            anchorTick = newAnchorTick
         }
     }
 
@@ -54,20 +53,16 @@ class ApsRollingHistory(
      */
     fun getApsTickState(tick: Tick, advanceToTick: Boolean): ApsTickState? {
         // Ensure the anchor is at least as new as the incoming data
-        if (tick.value > anchorTick && advanceToTick) {
+        if (tick > anchorTick && advanceToTick) {
             advanceTo(tick)
         }
 
-        val minValidTick = anchorTick - capacity + 1
+        val minValidTick = anchorTick.value - capacity + 1
 
-        if (tick.value in minValidTick..anchorTick) {
+        if (tick.value in minValidTick..anchorTick.value) {
             return buffer[bufferIndex(tick)]
         }
         return null
-    }
-
-    fun publishState() {
-        _state.value = getSnapshot()
     }
 
     private fun bufferIndex(tick: Tick): Int {
@@ -80,12 +75,12 @@ class ApsRollingHistory(
      */
     fun getSnapshot(): ApsHistorySnapshot {
         val currentAnchor = anchorTick
-        if (currentAnchor == -1) {
+        if (currentAnchor == Tick.invalid()) {
             return ApsHistorySnapshot(List(capacity) { null })
         }
 
         val result = List(capacity) { i ->
-            val tickValue = currentAnchor - capacity + 1 + i
+            val tickValue = currentAnchor.value - capacity + 1 + i
             if (tickValue >= 0) {
                 buffer[bufferIndex(Tick(tickValue)) % capacity]
             } else {
@@ -95,4 +90,3 @@ class ApsRollingHistory(
         return ApsHistorySnapshot(result)
     }
 }
-

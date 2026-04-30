@@ -25,9 +25,14 @@ class ApsNotificationManager(
     }
 
     fun createForegroundServiceNotification(data: ApsNotificationData): Notification {
+        val bgValueStr = data.getBgValueAsString();
+        val contentText = if (bgValueStr == null)
+            context.getString(R.string.aps_service_notification_content_no_value_yet)
+        else
+            context.getString(R.string.aps_service_notification_content_value, bgValueStr)
         return NotificationCompat.Builder(context, CHANNEL_ID)
             .setContentTitle(context.getString(R.string.aps_service_notification_title))
-            .setContentText(context.getString(R.string.aps_service_notification_content, data.getBgValueAsString()))
+            .setContentText(contentText)
             .setSmallIcon(R.mipmap.ic_launcher) // Use app icon for now
             .setOngoing(true)
             .setOnlyAlertOnce(true)

@@ -9,5 +9,12 @@ package de.dh.raaps.core.api.data
  * their original high-resolution timestamps.
  */
 @JvmInline
-value class Tick(val value: Int)
+value class Tick(val value: Int) : Comparable<Tick> {
+    override fun compareTo(other: Tick): Int = value.compareTo(other.value)
 
+    companion object {
+        fun invalid(): Tick {
+            return Tick(-1)
+        }
+    }
+}

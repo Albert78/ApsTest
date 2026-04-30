@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">APSTest</string>
+    <string name="app_name">RAAPS</string>
 
     <string name="short_date_time_format">dd.LL.yyyy, HH:mm</string>
     <string name="short_date_format">dd.LL.yyyy</string>
@@ -55,7 +55,8 @@
 
     <string name="preferences_screen_title">Einstellungen</string>
 
-    <string name="aps_service_notification_channel_name">APS Service</string>
-    <string name="aps_service_notification_title">APS wird ausgeführt</string>
-    <string name="aps_service_notification_content">Aktueller Glucose-Wert: %1$s</string>
+    <string name="aps_service_notification_channel_name">RAAPS Service</string>
+    <string name="aps_service_notification_title">RAAPS wird ausgeführt</string>
+    <string name="aps_service_notification_content_no_value_yet">Kein Glucosewert</string>
+    <string name="aps_service_notification_content_value">Glucose: %1$s</string>
 </resources>

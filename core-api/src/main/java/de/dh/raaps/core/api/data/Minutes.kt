@@ -8,10 +8,11 @@ import de.dh.raaps.core.api.MINUTES_PER_HOUR
  * from 0 until three weeks.
  */
 @JvmInline
-value class Minutes(val value: Short) {
+value class Minutes(val value: Short) : Comparable<Minutes> {
+    override fun compareTo(other: Minutes): Int = value.compareTo(other.value)
+
     companion object {
         val ONE_HOUR = Minutes(MINUTES_PER_HOUR.toShort())
         val ONE_DAY = Minutes(MINUTES_PER_DAY.toShort())
     }
 }
-
