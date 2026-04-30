@@ -76,12 +76,12 @@ class ApsService : Service() {
 
     private fun installApsPipeline() {
         serviceScope.launch {
-            glucosePlugin?.let { installCgmPipeline(it) }
+            glucosePlugin?.let { installGlucosePipeline(it) }
             installApsCalculationPipeline()
         }
     }
 
-    private suspend fun installCgmPipeline(glucosePlugin: GlucosePlugin) {
+    private suspend fun installGlucosePipeline(glucosePlugin: GlucosePlugin) {
         val sensorType = dataRepository.getOrCreateSensorTypeByName(glucosePlugin.getSensorTypeName())
         val dataProvider =
             dataRepository.getOrCreateDataProviderByName(glucosePlugin.name, glucosePlugin.dataProviderType)

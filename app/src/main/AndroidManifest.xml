@@ -41,7 +41,7 @@
             android:enabled="true"
             android:exported="true">
             <intent-filter>
-                <!-- Receive from xDrip -->
+                <!-- Receive from xDrip and Juggluco -->
                 <action android:name="com.eveningoutpost.dexdrip.BgEstimate" />
                 <!-- TODO: Support more glucose sources -->
             </intent-filter>

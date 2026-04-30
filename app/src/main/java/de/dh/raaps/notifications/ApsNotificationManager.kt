@@ -58,4 +58,3 @@ class ApsNotificationManager(
         const val CHANNEL_ID = "aps_service_channel"
     }
 }
-
