@@ -35,6 +35,18 @@
             android:exported="false"
             android:foregroundServiceType="health" />
 
+        <!-- Receive new BG readings from other local apps -->
+        <receiver
+            android:name=".interop.DataReceiver"
+            android:enabled="true"
+            android:exported="true">
+            <intent-filter>
+                <!-- Receive from xDrip -->
+                <action android:name="com.eveningoutpost.dexdrip.BgEstimate" />
+                <!-- TODO: Support more glucose sources -->
+            </intent-filter>
+        </receiver>
+
     </application>
 
 </manifest>
