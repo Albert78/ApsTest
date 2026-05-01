@@ -29,12 +29,14 @@ import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import de.dh.eventseries.ui.composables.WarningBanner
+import de.dh.eventseries.ui.composables.screenTitle
 import de.dh.raaps.R
+import de.dh.raaps.ui.screens.common.BgHistoryChart
 import de.dh.raaps.ui.screens.permissions.PermissionStatus
 import de.dh.raaps.ui.screens.permissions.PermissionsUiModel
 import de.dh.raaps.ui.screens.permissions.PermissionsViewModel
-import de.dh.eventseries.ui.composables.WarningBanner
-import de.dh.eventseries.ui.composables.screenTitle
+import de.dh.raaps.ui.theme.ApsTheme
 
 @Composable
 fun DashboardScreen(
@@ -140,8 +142,11 @@ fun DashboardContent(
                     }
 
                     Text(
-                        text = "APS dashboard coming soon. In the meantime, have a look at the core data model!",
+                        text = stringResource(R.string.dashboard_glucose_title),
                         style = MaterialTheme.typography.bodyLarge
+                    )
+
+                    BgHistoryChart(
                     )
                 }
             }
