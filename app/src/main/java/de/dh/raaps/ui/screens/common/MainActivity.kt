@@ -41,6 +41,7 @@ import de.dh.raaps.ui.screens.permissions.requestIgnoreBatteryOptimizations
 import de.dh.raaps.ui.theme.ApsTheme
 import de.dh.eventseries.screens.preferences.PreferencesScreen
 import de.dh.eventseries.screens.preferences.PreferencesViewModel
+import de.dh.raaps.ui.screens.dashboard.HistoryViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.serialization.Serializable
@@ -104,6 +105,8 @@ class MainActivity : ComponentActivity() {
                 entry<ApsDashboardRoute> { _ ->
                     val vm: DashboardViewModel =
                         viewModel(factory = DashboardViewModel.Companion.Factory(application))
+                    val historyVM: HistoryViewModel =
+                        viewModel(factory = HistoryViewModel.Companion.Factory(application))
                     val permissionsViewModel: PermissionsViewModel =
                         viewModel(factory = PermissionsViewModel.Companion.Factory(application))
 
@@ -114,6 +117,7 @@ class MainActivity : ComponentActivity() {
 
                     DashboardScreen(
                         viewModel = vm,
+                        historyViewModel = historyVM,
                         permissionsViewModel = permissionsViewModel,
                         onFixPermissions = { navViewModel.push(PermissionsRoute) },
                         onNavigateToPermissions = { navViewModel.push(PermissionsRoute) },
@@ -199,4 +203,3 @@ class MainActivity : ComponentActivity() {
         }
     }
 }
-

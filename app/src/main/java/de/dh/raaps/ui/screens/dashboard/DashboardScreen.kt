@@ -39,16 +39,19 @@ import de.dh.eventseries.ui.composables.screenTitle
 @Composable
 fun DashboardScreen(
     viewModel: DashboardViewModel,
+    historyViewModel:HistoryViewModel,
     permissionsViewModel: PermissionsViewModel,
     onFixPermissions: () -> Unit,
     onNavigateToPermissions: () -> Unit,
     onNavigateToPreferences: () -> Unit
 ) {
     val uiState by viewModel.uiState.collectAsState()
+    val historyUiState by historyViewModel.uiState.collectAsState()
     val permissionsUiState by permissionsViewModel.uiState.collectAsState()
 
     DashboardContent(
         uiState = uiState,
+        historyUiState = historyUiState,
         permissionsUiState = permissionsUiState,
         onFixPermissionsClick = onFixPermissions,
         onNavigateToPermissions = onNavigateToPermissions,
@@ -60,6 +63,7 @@ fun DashboardScreen(
 @Composable
 fun DashboardContent(
     uiState: DashboardUiState,
+    historyUiState: HistoryUiState,
     permissionsUiState: PermissionsUiModel,
     onFixPermissionsClick: () -> Unit,
     onNavigateToPermissions: () -> Unit,
@@ -145,12 +149,17 @@ fun DashboardContent(
     }
 }
 
+fun createSampleHistoryUiState(): HistoryUiState {
+    return HistoryUiState(isLoading = false, isError = false)
+}
+
 @Preview(showBackground = true)
 @Composable
 fun DashboardPreview() {
-    MaterialTheme {
+    ApsTheme {
         DashboardContent(
             uiState = DashboardUiState(isLoading = false, isError = false),
+            historyUiState = createSampleHistoryUiState(),
             permissionsUiState = PermissionsUiModel(
                 isLoading = false,
                 notificationPermissionStatus = PermissionStatus.Granted,
@@ -161,7 +170,7 @@ fun DashboardPreview() {
             ),
             onFixPermissionsClick = {},
             onNavigateToPermissions = {},
-            onNavigateToPreferences = {}
+            onNavigateToPreferences = {},
         )
     }
 }
@@ -169,9 +178,10 @@ fun DashboardPreview() {
 @Preview(showBackground = true)
 @Composable
 fun DashboardPermissionsWarningPreview() {
-    MaterialTheme {
+    ApsTheme {
         DashboardContent(
             uiState = DashboardUiState(isLoading = false, isError = false),
+            historyUiState = createSampleHistoryUiState(),
             permissionsUiState = PermissionsUiModel(
                 isLoading = false,
                 notificationPermissionStatus = PermissionStatus.Denied,
@@ -182,8 +192,7 @@ fun DashboardPermissionsWarningPreview() {
             ),
             onFixPermissionsClick = {},
             onNavigateToPermissions = {},
-            onNavigateToPreferences = {}
+            onNavigateToPreferences = {},
         )
     }
 }
-
