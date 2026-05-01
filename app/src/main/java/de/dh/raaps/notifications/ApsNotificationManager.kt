@@ -13,6 +13,7 @@ import de.dh.raaps.core.api.ToDo
 import de.dh.raaps.core.api.data.BgValue
 import de.dh.raaps.core.api.data.SmoothedBgSample
 import de.dh.raaps.ui.screens.permissions.canPostNotifications
+import java.util.Locale
 
 class ApsNotificationManager(
     val context: Context
@@ -33,20 +34,24 @@ class ApsNotificationManager(
         return "${sample.origValue.mgdl} -> ${sample.smoothedValue.mgdl} mg/dl"
     }
 
-    fun getBgValueString(sample: BgValue?): String? {
+    fun getBgValueString(sample: BgValue?, forceSign: Boolean): String? {
         if (sample == null) return null
-        return "${sample.mgdl} mg/dl"
+        return if (forceSign) {
+            String.format(Locale.getDefault(), "%+d mg/dl", sample.mgdl)
+        } else {
+            "${sample.mgdl} mg/dl"
+        }
     }
 
     fun createForegroundServiceNotification(data: ApsNotificationData): Notification {
         Log.d(TAG, "Build notification for ${data.lastBgSample}")
         ToDo.toBeImplemented("Take glucose unit from preferences")
-        val bgValueStr = getBgValueString(data.lastBgSample?.origValue);
+        val bgValueStr = getBgValueString(data.lastBgSample?.origValue, false);
         val title = if (bgValueStr == null) {
             context.getString(R.string.aps_service_notification_content_no_value_yet)
         } else {
             var ret = bgValueStr
-            val bgDeltaStr = getBgValueString(data.getBgDelta())
+            val bgDeltaStr = getBgValueString(data.getBgDelta(), true)
             if (bgDeltaStr != null) {
                 ret = "$ret, Δ$bgDeltaStr"
             }
