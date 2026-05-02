@@ -1,4 +1,4 @@
-package de.dh.eventseries.ui.composables
+package de.dh.raaps.ui.composables
 
 import android.content.res.Configuration
 import androidx.compose.foundation.layout.Box
@@ -24,7 +24,6 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import de.dh.raaps.R
-import de.dh.raaps.ui.composables.contentScrollIndicator
 import de.dh.raaps.ui.screens.common.Icon_Screen_Back
 import de.dh.raaps.ui.theme.ApsTheme
 
@@ -99,4 +98,3 @@ fun ScreenTitlePreview() {
         }
     }
 }
-

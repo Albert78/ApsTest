@@ -1,4 +1,4 @@
-package de.dh.eventseries.screens.preferences
+package de.dh.raaps.ui.screens.preferences
 
 import android.content.res.Configuration
 import androidx.compose.foundation.clickable
@@ -31,7 +31,7 @@ import androidx.compose.ui.unit.dp
 import de.dh.raaps.R
 import de.dh.raaps.ui.screens.common.Icon_Screen_Back
 import de.dh.raaps.ui.theme.ApsTheme
-import de.dh.eventseries.ui.composables.screenTitle
+import de.dh.raaps.ui.composables.screenTitle
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -156,4 +156,3 @@ fun PreferencesContentPreview() {
         )
     }
 }
-

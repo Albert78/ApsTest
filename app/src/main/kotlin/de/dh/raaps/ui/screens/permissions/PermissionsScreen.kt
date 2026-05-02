@@ -41,7 +41,7 @@ import de.dh.raaps.ui.screens.common.Icon_Check_Yes
 import de.dh.raaps.ui.screens.common.Icon_Info
 import de.dh.raaps.ui.screens.common.Icon_Screen_Back
 import de.dh.raaps.ui.theme.ApsTheme
-import de.dh.eventseries.ui.composables.screenTitle
+import de.dh.raaps.ui.composables.screenTitle
 
 @Composable
 fun PermissionsScreen(
@@ -325,4 +325,3 @@ fun PermissionsItemNotGrantedPreview() {
 fun PermissionsItemNotNeededPreview() {
     PermissionsItemPreview(PermissionStatus.Companion.create(isGranted = false, isNeeded = false))
 }
-

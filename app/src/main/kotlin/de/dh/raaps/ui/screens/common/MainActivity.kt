@@ -3,6 +3,7 @@ package de.dh.raaps.ui.screens.common
 import android.Manifest
 import android.content.Context
 import android.content.Intent
+import android.net.Uri
 import android.os.Build
 import android.os.Bundle
 import androidx.activity.ComponentActivity
@@ -27,10 +28,13 @@ import androidx.navigation3.runtime.NavKey
 import androidx.navigation3.runtime.entryProvider
 import androidx.navigation3.runtime.rememberSaveableStateHolderNavEntryDecorator
 import androidx.navigation3.ui.NavDisplay
+import de.dh.raaps.ui.screens.preferences.PreferencesScreen
+import de.dh.raaps.ui.screens.preferences.PreferencesViewModel
 import de.dh.raaps.MainApplication
 import de.dh.raaps.service.ApsService
 import de.dh.raaps.ui.screens.dashboard.DashboardScreen
 import de.dh.raaps.ui.screens.dashboard.DashboardViewModel
+import de.dh.raaps.ui.screens.dashboard.HistoryViewModel
 import de.dh.raaps.ui.screens.permissions.PermissionsScreen
 import de.dh.raaps.ui.screens.permissions.PermissionsViewModel
 import de.dh.raaps.ui.screens.permissions.canPostNotifications
@@ -39,9 +43,6 @@ import de.dh.raaps.ui.screens.permissions.openAutoRevokeSettings
 import de.dh.raaps.ui.screens.permissions.openNotificationSettings
 import de.dh.raaps.ui.screens.permissions.requestIgnoreBatteryOptimizations
 import de.dh.raaps.ui.theme.ApsTheme
-import de.dh.eventseries.screens.preferences.PreferencesScreen
-import de.dh.eventseries.screens.preferences.PreferencesViewModel
-import de.dh.raaps.ui.screens.dashboard.HistoryViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.serialization.Serializable
@@ -69,6 +70,8 @@ class MainActivity : ComponentActivity() {
             NavigationViewModel.Companion.NavigationViewModelFactory(listOf(ApsDashboardRoute))
         )[NavigationViewModel::class.java]
 
+        handleIntent(intent)
+
         val application = application as MainApplication
 
         permissionsViewModel = ViewModelProvider(
@@ -83,6 +86,22 @@ class MainActivity : ComponentActivity() {
                     color = MaterialTheme.colorScheme.background
                 ) {
                     MainApp()
+                }
+            }
+        }
+    }
+
+    override fun onNewIntent(intent: Intent) {
+        super.onNewIntent(intent)
+        handleIntent(intent)
+    }
+
+    private fun handleIntent(intent: Intent?) {
+        if (intent?.action == Intent.ACTION_VIEW) {
+            val data = intent.data
+            if (data?.scheme == "app" && data.host == "raaps.dh.de") {
+                if (data.path == "/dashboard") {
+                    navViewModel.reset(listOf(ApsDashboardRoute))
                 }
             }
         }
@@ -188,12 +207,18 @@ class MainActivity : ComponentActivity() {
                         onNavigateUp = { navViewModel.pop() }
                     )
                 }
-
             }
         )
     }
 
     companion object {
+        fun createStartDashboardIntent(context: Context): Intent {
+            return Intent(context, MainActivity::class.java).apply {
+                action = Intent.ACTION_VIEW
+                data = Uri.parse("app://raaps.dh.de/dashboard")
+            }
+        }
+
         /**
          * Use this to check if it is necessary to open permissions.
          */

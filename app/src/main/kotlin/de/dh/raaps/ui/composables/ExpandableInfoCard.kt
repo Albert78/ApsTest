@@ -1,4 +1,4 @@
-package de.dh.eventseries.ui.composables
+package de.dh.raaps.ui.composables
 
 import android.content.res.Configuration
 import androidx.compose.animation.AnimatedVisibility
@@ -166,4 +166,3 @@ private fun ExpandableInfoCardExpandedDarkPreview() {
         )
     }
 }
-

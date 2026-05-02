@@ -1,4 +1,4 @@
-package de.dh.eventseries.screens.preferences
+package de.dh.raaps.ui.screens.preferences
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
@@ -65,4 +65,3 @@ class PreferencesViewModel(
         }
     }
 }
-

@@ -128,6 +128,27 @@ class ApsRollingHistory(
         return ApsHistorySnapshot(result, tickDuration)
     }
 
+    /**
+     * Searches the history backward starting at [startTick] for the first [ApsTickState],
+     * which meets the [predicate] condition.
+     * Returns [null] if there is no match in the current history window.
+     */
+    fun findBackward(
+        startTick: Tick = anchorTick,
+        predicate: (ApsTickState) -> Boolean
+    ): ApsTickState? {
+        val minTick = getFirstTick().value
+        val start = startTick.value.coerceAtMost(anchorTick.value)
+
+        for (v in start downTo minTick) {
+            val state = buffer[bufferIndex(Tick(v))]
+            if (state != null && predicate(state)) {
+                return state
+            }
+        }
+        return null
+    }
+
     companion object {
         val TAG = ApsRollingHistory::class.simpleName
     }

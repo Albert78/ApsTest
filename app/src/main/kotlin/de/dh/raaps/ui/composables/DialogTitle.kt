@@ -1,4 +1,4 @@
-package de.dh.eventseries.ui.composables
+package de.dh.raaps.ui.composables
 
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.material3.MaterialTheme

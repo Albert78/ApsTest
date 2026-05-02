@@ -2,6 +2,7 @@ package de.dh.raaps.ui.screens.dashboard
 
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
@@ -29,8 +30,6 @@ import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import de.dh.eventseries.ui.composables.WarningBanner
-import de.dh.eventseries.ui.composables.screenTitle
 import de.dh.raaps.R
 import de.dh.raaps.core.api.ID_UNDEFINED
 import de.dh.raaps.core.api.data.BgSampleKind
@@ -39,6 +38,8 @@ import de.dh.raaps.core.api.data.SmoothedBgSample
 import de.dh.raaps.core.api.data.Tick
 import de.dh.raaps.core.api.data.Timestamp
 import de.dh.raaps.model.ApsTickState
+import de.dh.raaps.ui.composables.WarningBanner
+import de.dh.raaps.ui.composables.screenTitle
 import de.dh.raaps.ui.screens.common.BgHistoryChart
 import de.dh.raaps.ui.screens.permissions.PermissionStatus
 import de.dh.raaps.ui.screens.permissions.PermissionsUiModel
@@ -153,6 +154,8 @@ fun DashboardContent(
                         text = stringResource(R.string.dashboard_glucose_title),
                         style = MaterialTheme.typography.bodyLarge
                     )
+
+                    Spacer(modifier = Modifier.padding(top = 15.dp))
 
                     BgHistoryChart(
                         historyUiState.historyTicks,

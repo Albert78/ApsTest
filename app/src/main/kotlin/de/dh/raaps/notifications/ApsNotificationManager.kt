@@ -3,6 +3,7 @@ package de.dh.raaps.notifications
 import android.app.Notification
 import android.app.NotificationChannel
 import android.app.NotificationManager
+import android.app.PendingIntent
 import android.content.Context
 import android.content.Context.NOTIFICATION_SERVICE
 import android.util.Log
@@ -12,6 +13,7 @@ import de.dh.raaps.R
 import de.dh.raaps.core.api.ToDo
 import de.dh.raaps.core.api.data.BgValue
 import de.dh.raaps.core.api.data.SmoothedBgSample
+import de.dh.raaps.ui.screens.common.MainActivity
 import de.dh.raaps.ui.screens.permissions.canPostNotifications
 import java.util.Locale
 
@@ -53,15 +55,23 @@ class ApsNotificationManager(
             var ret = bgValueStr
             val bgDeltaStr = getBgValueString(data.getBgDelta(), true)
             if (bgDeltaStr != null) {
-                ret = "$ret, Δ$bgDeltaStr mg/dl"
+                ret = "$ret (Δ$bgDeltaStr) mg/dl"
             }
             ret
         }
         val details = getBgValueSmoothedString(data.lastBgSample)
+
+        val dashboardIntent = MainActivity.createStartDashboardIntent(context)
+        val goToEventPendingIntent = PendingIntent.getActivity(
+            context, 0,
+            dashboardIntent, PendingIntent.FLAG_IMMUTABLE
+        )
+
         return NotificationCompat.Builder(context, CHANNEL_ID)
             .setContentTitle(title)
             .setContentText(details)
             .setSmallIcon(R.mipmap.ic_launcher) // Use app icon for now
+            .setContentIntent(goToEventPendingIntent)
             .setOngoing(true)
             .setOnlyAlertOnce(true)
             .setAllowSystemGeneratedContextualActions(false)

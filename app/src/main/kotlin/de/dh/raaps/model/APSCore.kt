@@ -4,6 +4,7 @@ import android.util.Log
 import de.dh.raaps.core.api.DataProvider
 import de.dh.raaps.core.api.GlucosePlugin
 import de.dh.raaps.core.api.data.BgReadingsInterval
+import de.dh.raaps.core.api.data.BgSampleKind
 import de.dh.raaps.core.api.data.Minutes
 import de.dh.raaps.core.api.data.SensorType
 import de.dh.raaps.core.api.data.SmoothedBgSample
@@ -84,6 +85,22 @@ class APSCore(
             Log.d(TAG, "Initializing...")
             setCoreState(APSCoreState.Initializing)
             rollingHistory = initializeRollingHistory(dataRepository)
+
+            fun bgPresentPredicate(): (ApsTickState) -> Boolean = { state ->
+                state.bg?.sampleKind != BgSampleKind.Invalid
+            }
+
+            val currentBgTick = rollingHistory.findBackward(
+                rollingHistory.anchorTick,
+                bgPresentPredicate()
+            )
+            currentBg = currentBgTick?.bg
+            lastBg = if (currentBgTick != null) rollingHistory.findBackward(
+                currentBgTick.tick,
+                bgPresentPredicate()
+            )?.bg else null
+            onDataUpdated()
+
             Log.d(TAG, "Finished initialization...")
             setCoreState(APSCoreState.Idle)
         }
