@@ -1,4 +1,4 @@
-package de.dh.raaps.ui.screens.dashboard
+package de.dh.raaps.ui.screens.history
 
 import android.app.Application
 import androidx.lifecycle.AndroidViewModel

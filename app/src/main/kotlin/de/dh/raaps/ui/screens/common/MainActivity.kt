@@ -33,7 +33,8 @@ import de.dh.raaps.service.ApsService
 import de.dh.raaps.ui.composables.EdgeToEdgeHandler
 import de.dh.raaps.ui.screens.dashboard.DashboardScreen
 import de.dh.raaps.ui.screens.dashboard.DashboardViewModel
-import de.dh.raaps.ui.screens.dashboard.HistoryViewModel
+import de.dh.raaps.ui.screens.history.HistoryScreen
+import de.dh.raaps.ui.screens.history.HistoryViewModel
 import de.dh.raaps.ui.screens.permissions.PermissionsScreen
 import de.dh.raaps.ui.screens.permissions.PermissionsViewModel
 import de.dh.raaps.ui.screens.permissions.canPostNotifications
@@ -50,7 +51,9 @@ import kotlinx.serialization.Serializable
 
 // --- Navigation Routes
 
-@Serializable object ApsDashboardRoute : NavKey
+@Serializable object DashboardRoute : NavKey
+
+@Serializable object HistoryRoute : NavKey
 
 @Serializable object PermissionsRoute : NavKey
 
@@ -68,7 +71,7 @@ class MainActivity : ComponentActivity() {
 
         navViewModel = ViewModelProvider(
             this,
-            NavigationViewModel.Companion.NavigationViewModelFactory(listOf(ApsDashboardRoute))
+            NavigationViewModel.Companion.NavigationViewModelFactory(listOf(DashboardRoute))
         )[NavigationViewModel::class.java]
 
         handleIntent(intent)
@@ -103,7 +106,7 @@ class MainActivity : ComponentActivity() {
             val data = intent.data
             if (data?.scheme == "app" && data.host == "raaps.dh.de") {
                 if (data.path == "/dashboard") {
-                    navViewModel.reset(listOf(ApsDashboardRoute))
+                    navViewModel.reset(listOf(DashboardRoute))
                 }
             }
         }
@@ -123,7 +126,7 @@ class MainActivity : ComponentActivity() {
                 rememberViewModelStoreNavEntryDecorator()
             ),
             entryProvider = entryProvider {
-                entry<ApsDashboardRoute> { _ ->
+                entry<DashboardRoute> { _ ->
                     val vm: DashboardViewModel =
                         viewModel(factory = DashboardViewModel.Companion.Factory(application))
                     val historyVM: HistoryViewModel =
@@ -142,7 +145,17 @@ class MainActivity : ComponentActivity() {
                         permissionsViewModel = permissionsViewModel,
                         onFixPermissions = { navViewModel.push(PermissionsRoute) },
                         onNavigateToPermissions = { navViewModel.push(PermissionsRoute) },
-                        onNavigateToPreferences = { navViewModel.push(PreferencesMainRoute) }
+                        onNavigateToPreferences = { navViewModel.push(PreferencesMainRoute) },
+                        onHistoryChartClick = {navViewModel.push(HistoryRoute)}
+                    )
+                }
+
+                entry<HistoryRoute> { _ ->
+                    val historyVM: HistoryViewModel =
+                        viewModel(factory = HistoryViewModel.Companion.Factory(application))
+
+                    HistoryScreen(
+                        historyViewModel = historyVM
                     )
                 }
 

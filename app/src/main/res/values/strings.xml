@@ -15,7 +15,7 @@
     <string name="action_delete">Löschen</string>
     <string name="selection_mode_num_items_selected">%d ausgewählt</string>
 
-    <string name="aps_dashboard_screen_title">APS Dashboard</string>
+    <string name="dashboard_screen_title">RAAPS</string>
     <string name="menu_item_permissions_label">App-Berechtigungen</string>
     <string name="menu_item_preferences_label">Einstellungen</string>
 
@@ -58,4 +58,6 @@
 
     <string name="aps_service_notification_channel_name">RAAPS Service</string>
     <string name="aps_service_notification_content_no_value_yet">Kein Glukosewert</string>
+
+    <string name="history_screen_title">Status</string>
 </resources>

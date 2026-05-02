@@ -1,5 +1,7 @@
 package de.dh.raaps.ui.screens.common
 
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -38,6 +40,7 @@ import de.dh.raaps.ui.composables.Blue200
 import de.dh.raaps.ui.composables.BlueA200
 import de.dh.raaps.ui.composables.OrangeA200
 import de.dh.raaps.ui.composables.Red400
+import de.dh.raaps.ui.composables.Yellow
 import java.util.Calendar
 import java.util.Locale
 
@@ -49,7 +52,8 @@ fun BgHistoryChart(
     tickInterval: Minutes,
     modifier: Modifier = Modifier,
     lowBgThreshold: Double = 70.0,
-    highBgThreshold: Double = 170.0
+    highBgThreshold: Double = 170.0,
+    onChartClick: (() -> Unit)? = null
 ) {
     val modelProducer = remember { CartesianChartModelProducer() }
 
@@ -60,9 +64,15 @@ fun BgHistoryChart(
                     val bg = tickStates[it]?.bg ?: return@filter false
                     return@filter bg.sampleKind != BgSampleKind.Invalid
                 }
+                // Series 1: Smoothed values (smoothedValue) - Drawn first (under)
                 series(
                     x = validIndices.toList(),
                     y = validIndices.map { tickStates[it]!!.bg!!.smoothedValue.mgdl.toFloat() }
+                )
+                // Series 2: Raw values (origValue) - Drawn second (over)
+                series(
+                    x = validIndices.toList(),
+                    y = validIndices.map { tickStates[it]!!.bg!!.origValue.mgdl.toFloat() }
                 )
             }
         }
@@ -183,6 +193,12 @@ fun BgHistoryChart(
         chart = rememberCartesianChart(
             rememberLineCartesianLayer(
                 lineProvider = LineCartesianLayer.LineProvider.series(
+                    // Style for Series 1 (Yellow, Smoothed values)
+                    LineCartesianLayer.rememberLine(
+                        fill = LineCartesianLayer.LineFill.single(Fill(Yellow)),
+                        pointProvider = null // No dots for the smoothed line
+                    ),
+                    // Style for Series 2 (Blue, Raw values)
                     LineCartesianLayer.rememberLine(
                         fill = LineCartesianLayer.LineFill.single(Fill(Blue200)),
                         pointProvider = LineCartesianLayer.PointProvider.single(
@@ -208,6 +224,11 @@ fun BgHistoryChart(
         modelProducer = modelProducer,
         scrollState = scrollState,
         zoomState = zoomState,
-        modifier = modifier,
+        modifier = modifier.clickable(
+            interactionSource = remember { MutableInteractionSource() },
+            indication = null, // No ripple to not interfere with chart visuals
+            enabled = onChartClick != null,
+            onClick = { onChartClick?.invoke() }
+        ),
     )
 }

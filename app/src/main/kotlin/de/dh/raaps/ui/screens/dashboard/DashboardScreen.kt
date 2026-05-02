@@ -4,6 +4,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.MoreVert
@@ -31,31 +32,26 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import de.dh.raaps.R
-import de.dh.raaps.core.api.ID_UNDEFINED
-import de.dh.raaps.core.api.data.BgSampleKind
-import de.dh.raaps.core.api.data.BgValue
-import de.dh.raaps.core.api.data.SmoothedBgSample
-import de.dh.raaps.core.api.data.Tick
-import de.dh.raaps.core.api.data.Timestamp
-import de.dh.raaps.model.ApsTickState
 import de.dh.raaps.ui.composables.WarningBanner
 import de.dh.raaps.ui.composables.screenTitle
 import de.dh.raaps.ui.screens.common.BgHistoryChart
+import de.dh.raaps.ui.screens.history.HistoryUiState
+import de.dh.raaps.ui.screens.history.HistoryViewModel
+import de.dh.raaps.ui.screens.history.createSampleHistoryUiState
 import de.dh.raaps.ui.screens.permissions.PermissionStatus
 import de.dh.raaps.ui.screens.permissions.PermissionsUiModel
 import de.dh.raaps.ui.screens.permissions.PermissionsViewModel
 import de.dh.raaps.ui.theme.ApsTheme
-import kotlin.math.sin
-import kotlin.random.Random
 
 @Composable
 fun DashboardScreen(
     viewModel: DashboardViewModel,
-    historyViewModel:HistoryViewModel,
+    historyViewModel: HistoryViewModel,
     permissionsViewModel: PermissionsViewModel,
     onFixPermissions: () -> Unit,
     onNavigateToPermissions: () -> Unit,
-    onNavigateToPreferences: () -> Unit
+    onNavigateToPreferences: () -> Unit,
+    onHistoryChartClick: () -> Unit
 ) {
     val uiState by viewModel.uiState.collectAsState()
     val historyUiState by historyViewModel.uiState.collectAsState()
@@ -67,7 +63,8 @@ fun DashboardScreen(
         permissionsUiState = permissionsUiState,
         onFixPermissionsClick = onFixPermissions,
         onNavigateToPermissions = onNavigateToPermissions,
-        onNavigateToPreferences = onNavigateToPreferences
+        onNavigateToPreferences = onNavigateToPreferences,
+        onHistoryChartClick = onHistoryChartClick
     )
 }
 
@@ -79,7 +76,8 @@ fun DashboardContent(
     permissionsUiState: PermissionsUiModel,
     onFixPermissionsClick: () -> Unit,
     onNavigateToPermissions: () -> Unit,
-    onNavigateToPreferences: () -> Unit
+    onNavigateToPreferences: () -> Unit,
+    onHistoryChartClick: (() -> Unit)?
 ) {
     val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior()
     var menuExpanded by remember { mutableStateOf(false) }
@@ -88,7 +86,7 @@ fun DashboardContent(
         modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
         topBar = {
             TopAppBar(
-                title = screenTitle(stringResource(id = R.string.aps_dashboard_screen_title)),
+                title = screenTitle(stringResource(id = R.string.dashboard_screen_title)),
                 actions = {
                     Box {
                         IconButton(onClick = { menuExpanded = true }) {
@@ -136,63 +134,41 @@ fun DashboardContent(
                 .fillMaxSize()
                 .padding(innerPadding)
         ) {
-            if (uiState.isLoading) {
-                CircularProgressIndicator(
-                    modifier = Modifier.align(Alignment.Center)
+            Column(modifier = Modifier.padding(16.dp)) {
+                // Permissions warning header
+                if (!permissionsUiState.isPermissionsConfigComplete) {
+                    WarningBanner(
+                        warningText = stringResource(id = R.string.dashboard_permissions_missing),
+                        actionText = stringResource(id = R.string.dashboard_fix_permissions_link),
+                        onActionClick = onFixPermissionsClick
+                    )
+                }
+
+                Text(
+                    text = stringResource(R.string.dashboard_glucose_title),
+                    style = MaterialTheme.typography.bodyLarge
                 )
-            } else {
-                Column(modifier = Modifier.padding(16.dp)) {
-                    // Permissions warning header
-                    if (!permissionsUiState.isPermissionsConfigComplete) {
-                        WarningBanner(
-                            warningText = stringResource(id = R.string.dashboard_permissions_missing),
-                            actionText = stringResource(id = R.string.dashboard_fix_permissions_link),
-                            onActionClick = onFixPermissionsClick
+
+                Spacer(modifier = Modifier.padding(top = 15.dp))
+
+                Box(
+                    modifier = Modifier.height(300.dp)
+                ) {
+                    if (historyUiState.isLoading) {
+                        CircularProgressIndicator(
+                            modifier = Modifier.align(Alignment.Center)
+                        )
+                    } else {
+                        BgHistoryChart(
+                            historyUiState.historyTicks,
+                            historyUiState.tickInterval,
+                            onChartClick = onHistoryChartClick
                         )
                     }
-
-                    Text(
-                        text = stringResource(R.string.dashboard_glucose_title),
-                        style = MaterialTheme.typography.bodyLarge
-                    )
-
-                    Spacer(modifier = Modifier.padding(top = 15.dp))
-
-                    BgHistoryChart(
-                        historyUiState.historyTicks,
-                        historyUiState.tickInterval
-                    )
                 }
             }
         }
     }
-}
-
-fun createSampleHistoryUiState(): HistoryUiState {
-    fun generatedBg(index: Int): SmoothedBgSample {
-        // Base curve: average 120, fluctuation of +/- 50 using overlapping sine waves
-        val base = 170.0
-        val curve = 100.0 * sin(index / 10.0) + 15.0 * sin(index / 12.0)
-        val noise = Random.nextDouble(-5.0, 5.0)
-
-        val bgValue = (base + curve + noise).toInt().coerceIn(40, 400)
-
-        return SmoothedBgSample(
-            BgValue.fromMgDl(bgValue),
-            BgValue.fromMgDl(bgValue),
-            BgSampleKind.Value,
-            Timestamp(index.toLong())
-        )
-    }
-    return HistoryUiState(
-        isLoading = false,
-        isError = false,
-        historyTicks = List(600) { index ->
-            ApsTickState(
-                ID_UNDEFINED, Tick(index), generatedBg(index)
-            )
-        }
-    )
 }
 
 @Preview(showBackground = true)
@@ -213,6 +189,7 @@ fun DashboardPreview() {
             onFixPermissionsClick = {},
             onNavigateToPermissions = {},
             onNavigateToPreferences = {},
+            onHistoryChartClick = {},
         )
     }
 }
@@ -235,6 +212,7 @@ fun DashboardPermissionsWarningPreview() {
             onFixPermissionsClick = {},
             onNavigateToPermissions = {},
             onNavigateToPreferences = {},
+            onHistoryChartClick = {}
         )
     }
 }
