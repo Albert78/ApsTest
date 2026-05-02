@@ -1,9 +1,11 @@
 package de.dh.raaps.ui.screens.common
 
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.unit.dp
 import com.patrykandpatrick.vico.compose.cartesian.CartesianChartHost
 import com.patrykandpatrick.vico.compose.cartesian.CartesianDrawingContext
 import com.patrykandpatrick.vico.compose.cartesian.CartesianMeasuringContext
@@ -16,15 +18,21 @@ import com.patrykandpatrick.vico.compose.cartesian.data.CartesianChartModelProdu
 import com.patrykandpatrick.vico.compose.cartesian.data.CartesianLayerRangeProvider
 import com.patrykandpatrick.vico.compose.cartesian.data.CartesianValueFormatter
 import com.patrykandpatrick.vico.compose.cartesian.data.lineSeries
+import com.patrykandpatrick.vico.compose.cartesian.layer.LineCartesianLayer
+import com.patrykandpatrick.vico.compose.cartesian.layer.rememberLine
 import com.patrykandpatrick.vico.compose.cartesian.layer.rememberLineCartesianLayer
 import com.patrykandpatrick.vico.compose.cartesian.rememberCartesianChart
 import com.patrykandpatrick.vico.compose.cartesian.rememberVicoScrollState
 import com.patrykandpatrick.vico.compose.cartesian.rememberVicoZoomState
+import com.patrykandpatrick.vico.compose.common.Fill
 import com.patrykandpatrick.vico.compose.common.Position
+import com.patrykandpatrick.vico.compose.common.component.rememberShapeComponent
 import com.patrykandpatrick.vico.compose.common.data.ExtraStore
 import de.dh.raaps.core.api.data.BgSampleKind
 import de.dh.raaps.core.api.data.Minutes
 import de.dh.raaps.model.ApsTickState
+import de.dh.raaps.ui.composables.Blue200
+import de.dh.raaps.ui.composables.BlueA200
 import java.util.Calendar
 import java.util.Locale
 
@@ -134,7 +142,23 @@ fun BgHistoryChart(
 
     CartesianChartHost(
         chart = rememberCartesianChart(
-            rememberLineCartesianLayer(rangeProvider = rangeProvider),
+            rememberLineCartesianLayer(
+                lineProvider = LineCartesianLayer.LineProvider.series(
+                    LineCartesianLayer.rememberLine(
+                        fill = LineCartesianLayer.LineFill.single(Fill(Blue200)),
+                        pointProvider = LineCartesianLayer.PointProvider.single(
+                            LineCartesianLayer.Point(
+                                rememberShapeComponent(
+                                    shape = CircleShape,
+                                    fill = Fill(BlueA200)
+                                ),
+                                size = 6.dp
+                            )
+                        )
+                    )
+                ),
+                rangeProvider = rangeProvider
+            ),
             startAxis = VerticalAxis.rememberStart(itemPlacer = yAxisItemPlacer),
             bottomAxis = HorizontalAxis.rememberBottom(
                 valueFormatter = xAxisValueFormatter,
