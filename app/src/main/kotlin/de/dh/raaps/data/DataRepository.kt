@@ -57,11 +57,11 @@ class DataRepository(val database: AppDatabase) {
         return mockSimpleTherapyData()
     }
 
-    fun insertOrUpdateTickState(tickState: ApsTickState) {
+    suspend fun insertOrUpdateTickState(tickState: ApsTickState) {
         database.stateDao().insertOrUpdateTickState(tickState.toEntity())
     }
 
-    fun getTickStates(fromTick: Tick, toTick: Tick): List<ApsTickState> {
+    suspend fun getTickStates(fromTick: Tick, toTick: Tick): List<ApsTickState> {
         return database.stateDao().getTickStates(fromTick, toTick).toModel()
     }
 }

@@ -15,6 +15,8 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 
 enum class APSCoreState {
     Initializing,
@@ -56,11 +58,19 @@ class APSCore(
     private val _busyState = MutableStateFlow(0)
     val busyState: StateFlow<Int> = _busyState.asStateFlow()
 
+    /**
+     * Lock which is acquired in situations where a suspend function
+     * must be atomic. Other functions don't need to be locked since
+     * we're single-threaded inside this class by design.
+     */
+    private val atomicOperationLock = Mutex()
 
     suspend fun initialize() {
-        _coreState.emit(APSCoreState.Initializing)
-        rollingHistory = loadRollingHistory(dataRepository)
-        _coreState.emit(APSCoreState.Idle)
+        atomicOperationLock.withLock {
+            _coreState.emit(APSCoreState.Initializing)
+            rollingHistory = initializeRollingHistory(dataRepository)
+            _coreState.emit(APSCoreState.Idle)
+        }
     }
 
     /**
@@ -159,8 +169,12 @@ class APSCore(
     }
 
     private suspend fun initializeRollingHistory(dataRepository: DataRepository): ApsRollingHistory {
-        // TODO: Load from DB or initialize empty
-        return ApsRollingHistory(historyHours = 10, tickDuration = Minutes(5))
+        val result = ApsRollingHistory(historyHours = 10, tickDuration = Minutes(5))
+        val anchorTick = result.getNowTick()
+        result.advanceTo(anchorTick)
+        val tickStates = dataRepository.getTickStates(result.getFirstTick(), anchorTick)
+        result.replaceBufferTickStates(tickStates)
+        return result
     }
 
     companion object {

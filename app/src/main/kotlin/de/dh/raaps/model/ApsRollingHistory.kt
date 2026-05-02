@@ -1,5 +1,6 @@
 package de.dh.raaps.model
 
+import android.util.Log
 import de.dh.raaps.core.api.data.Minutes
 import de.dh.raaps.core.api.data.Tick
 import de.dh.raaps.core.api.data.Timestamp
@@ -24,6 +25,12 @@ class ApsRollingHistory(
 
         return Tick((timestamp.ms  / tickSizeMs).toInt())
     }
+
+    fun getNowTick(): Tick {
+        return tick(Timestamp.now())
+    }
+
+    fun getFirstTick() = Tick(anchorTick.value - capacity + 1)
 
     /**
      * Advances the history's timeframe to a new point in time.
@@ -58,7 +65,7 @@ class ApsRollingHistory(
             advanceTo(tick)
         }
 
-        val minValidTick = anchorTick.value - capacity + 1
+        val minValidTick = getFirstTick().value
 
         if (tick.value in minValidTick..anchorTick.value) {
             return buffer[bufferIndex(tick)]
@@ -68,6 +75,35 @@ class ApsRollingHistory(
 
     private fun bufferIndex(tick: Tick): Int {
         return tick.value % capacity
+    }
+
+    fun replaceBufferTickStates(tickStates: List<ApsTickState>) {
+        // Clear buffer
+        for (i in 0..capacity) {
+            buffer[i] = null
+        }
+
+        // Fill given tick states into buffer
+        val firstTick = getFirstTick()
+        for (loadedState in tickStates) {
+            if (loadedState.tick !in firstTick..anchorTick) {
+                Log.w(TAG, "Trying to fill tick state into history with invalid tick number: Tick = ${loadedState.tick.value}, FirstTick = ${firstTick.value}, AnchorTick = ${anchorTick.value}")
+                continue
+            }
+            val index = bufferIndex(loadedState.tick)
+            if (index in 0..capacity) {
+                buffer[index] = loadedState
+            }
+        }
+
+        // Fill empty buffer spaces with empty tick states
+        for (i in 0..capacity) {
+            val tick = Tick(firstTick.value + i)
+            val index = bufferIndex(tick)
+            if (buffer[index] == null) {
+                buffer[index] = ApsTickState.empty(tick)
+            }
+        }
     }
 
     /**
@@ -89,5 +125,9 @@ class ApsRollingHistory(
             }
         }
         return ApsHistorySnapshot(result)
+    }
+
+    companion object {
+        val TAG = ApsRollingHistory::class.simpleName
     }
 }

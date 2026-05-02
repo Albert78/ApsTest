@@ -52,10 +52,10 @@ interface TherapyDao {
 @Dao
 interface StateDao {
     @Upsert
-    fun insertOrUpdateTickState(tickState: TickStateEntity)
+    suspend fun insertOrUpdateTickState(tickState: TickStateEntity)
 
     @Query("SELECT * FROM tick_state WHERE tick >= :fromTick AND tick <= :toTick ORDER BY tick")
-    fun getTickStates(fromTick: Tick, toTick: Tick): List<TickStateEntity>
+    suspend fun getTickStates(fromTick: Tick, toTick: Tick): List<TickStateEntity>
 }
 
 @Database(entities = [

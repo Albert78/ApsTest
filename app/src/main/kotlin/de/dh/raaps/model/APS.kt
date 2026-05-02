@@ -68,8 +68,9 @@ class APS(
     private val _lastDataTime = MutableStateFlow<Timestamp>(Timestamp(0))
     val lastDataTime: StateFlow<Timestamp> = _lastDataTime.asStateFlow()
 
-    init {
+    fun startInitialization() {
         installWakeLockManager()
+        core.initialize()
         restartGlucosePipeline()
     }
 
