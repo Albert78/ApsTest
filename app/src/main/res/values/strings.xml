@@ -60,4 +60,8 @@
     <string name="aps_service_notification_content_no_value_yet">Kein Glukosewert</string>
 
     <string name="history_screen_title">Status</string>
+    <string name="time_ago_just_now">jetzt</string>
+    <string name="time_ago_seconds_ago">vor %1$d Sek</string>
+    <string name="time_ago_minutes_ago">vor %1$d Min</string>
+    <string name="time_ago_hours_ago">vor %1$d Std</string>
 </resources>

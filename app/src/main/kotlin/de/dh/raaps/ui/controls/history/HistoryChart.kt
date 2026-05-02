@@ -242,10 +242,10 @@ fun BgHistoryChart(
     )
 }
 
-fun generatedBg(size: Int, index: Int): SmoothedBgSample {
+fun generatedBg(minsInterval: Int, index: Int): SmoothedBgSample {
     // Base curve: average 120, fluctuation of +/- 50 using overlapping sine waves
     val base = 170.0
-    val curve = 100.0 * sin(index / (size / 120.0)) + 15.0 * sin(index / 12.0)
+    val curve = 100.0 * sin(index * minsInterval / 50.0) + 15.0 * sin(index / 12.0)
     val noise = Random.nextDouble(-5.0, 5.0)
 
     val bgValue = (base + curve + noise).toInt().coerceIn(40, 400)
@@ -258,16 +258,16 @@ fun generatedBg(size: Int, index: Int): SmoothedBgSample {
     )
 }
 
-fun createSampleHistoryTicks(size: Int): List<ApsTickState> = List(size) { index ->
+fun createSampleHistoryTicks(size: Int, minsInterval: Int): List<ApsTickState> = List(size) { index ->
     ApsTickState(
-        ID_UNDEFINED, Tick(index), generatedBg(size, index)
+        ID_UNDEFINED, Tick(index), generatedBg(minsInterval, index)
     )
 }
 
 @Preview(showBackground = true)
 @Composable
 fun HistoryChart5Preview() {
-    val historyTicks = createSampleHistoryTicks(120)
+    val historyTicks = createSampleHistoryTicks(120, 5)
     ApsTheme {
         BgHistoryChart(
             tickStates = historyTicks,
@@ -279,7 +279,7 @@ fun HistoryChart5Preview() {
 @Preview(showBackground = true)
 @Composable
 fun HistoryChart1Preview() {
-    val historyTicks = createSampleHistoryTicks(600)
+    val historyTicks = createSampleHistoryTicks(600, 1)
     ApsTheme {
         BgHistoryChart(
             tickStates = historyTicks,

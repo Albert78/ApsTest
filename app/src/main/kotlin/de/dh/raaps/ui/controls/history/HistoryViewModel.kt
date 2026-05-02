@@ -8,6 +8,7 @@ import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.CreationExtras
 import de.dh.raaps.MainApplication
 import de.dh.raaps.core.api.data.Minutes
+import de.dh.raaps.core.api.data.Timestamp
 import de.dh.raaps.model.APS
 import de.dh.raaps.model.APSCoreState
 import de.dh.raaps.model.ApsHistorySnapshot
@@ -17,6 +18,27 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import kotlin.Int
+
+enum class BgTrend {
+    DoubleUp,
+    SingleUp,
+    FortyFiveUp,
+    Flat,
+    FortyFiveDown,
+    SingleDown,
+    DoubleDown,
+    NotComputable
+}
+
+data class CurrentBgUiState(
+    val isLoading: Boolean,
+    val isError: Boolean,
+    val bgValue: Int = 0,
+    val delta: Int = 0,
+    val trend: BgTrend = BgTrend.Flat,
+    val timestamp: Timestamp = Timestamp.now()
+)
 
 data class HistoryUiState(
     val isLoading: Boolean,
@@ -28,8 +50,11 @@ data class HistoryUiState(
 class HistoryViewModel(
     val application: MainApplication
 ) : AndroidViewModel(application) {
-    private val _uiState = MutableStateFlow(HistoryUiState(isLoading = true, isError = false))
-    val uiState = _uiState.asStateFlow()
+    private val _currentBgUiState = MutableStateFlow(CurrentBgUiState(isLoading = true, isError = false))
+    val currentBgUiState = _currentBgUiState.asStateFlow()
+
+    private val _historyUiState = MutableStateFlow(HistoryUiState(isLoading = true, isError = false))
+    val historyUiState = _historyUiState.asStateFlow()
 
     private val aps: APS = application.aps
     private val dataRepository = application.dataRepository
@@ -56,9 +81,18 @@ class HistoryViewModel(
     }
 
     private fun updateUiModel(apsHistory: ApsHistorySnapshot) {
-        val res = application.resources
+        _currentBgUiState.update {
+            CurrentBgUiState(
+                isLoading = false,
+                isError = false,
+                bgValue = ,
+                delta = ,
+                trend = ,
+                timestamp =
+            )
+        }
 
-        _uiState.update {
+        _historyUiState.update {
             HistoryUiState(
                 isLoading = false,
                 isError = false,

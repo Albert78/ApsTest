@@ -34,6 +34,8 @@ import androidx.compose.ui.unit.dp
 import de.dh.raaps.R
 import de.dh.raaps.ui.composables.WarningBanner
 import de.dh.raaps.ui.composables.screenTitle
+import de.dh.raaps.ui.controls.currentbg.CurrentBgUiState
+import de.dh.raaps.ui.controls.history.CurrentBgView
 import de.dh.raaps.ui.controls.history.BgHistoryChart
 import de.dh.raaps.ui.controls.history.HistoryUiState
 import de.dh.raaps.ui.controls.history.HistoryViewModel
@@ -54,12 +56,15 @@ fun DashboardScreen(
     onHistoryChartClick: () -> Unit
 ) {
     val uiState by viewModel.uiState.collectAsState()
-    val historyUiState by historyViewModel.uiState.collectAsState()
+    val currentBgUiState by historyViewModel.currentBgUiState.collectAsState()
+    val historyUiState by historyViewModel.historyUiState.collectAsState()
     val permissionsUiState by permissionsViewModel.uiState.collectAsState()
 
     DashboardContent(
         uiState = uiState,
+        currentBgUiState = currentBgUiState,
         historyUiState = historyUiState,
+        currentBgUiState = currentBgUiState,
         permissionsUiState = permissionsUiState,
         onFixPermissionsClick = onFixPermissions,
         onNavigateToPermissions = onNavigateToPermissions,
@@ -72,6 +77,7 @@ fun DashboardScreen(
 @Composable
 fun DashboardContent(
     uiState: DashboardUiState,
+    currentBgUiState: CurrentBgUiState,
     historyUiState: HistoryUiState,
     permissionsUiState: PermissionsUiModel,
     onFixPermissionsClick: () -> Unit,
@@ -143,6 +149,8 @@ fun DashboardContent(
                         onActionClick = onFixPermissionsClick
                     )
                 }
+
+                CurrentBgView(currentBgUiState)
 
                 Text(
                     text = stringResource(R.string.dashboard_glucose_title),

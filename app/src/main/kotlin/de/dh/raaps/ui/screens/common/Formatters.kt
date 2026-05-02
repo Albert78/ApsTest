@@ -6,6 +6,7 @@ import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.platform.LocalLocale
 import androidx.compose.ui.res.stringResource
 import de.dh.raaps.R
+import de.dh.raaps.core.api.data.Timestamp
 import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.LocalTime
@@ -110,3 +111,21 @@ fun shortDate(date: LocalDate?, default: String = "-"): String {
     } ?: default
 }
 
+/////////////////////////////////////////////// Time ago //////////////////////////////////////
+
+@Composable
+fun shortRelativeTimeAgo(timestamp: Timestamp): String {
+    val diffMs = System.currentTimeMillis() - timestamp.ms
+    val diffSec = diffMs / 1000
+    val diffMin = diffMs / 60000
+    val diffHours = diffMin / 60
+    return when {
+        diffSec < 5 -> stringResource(R.string.time_ago_just_now)
+        diffSec < 60 -> stringResource(R.string.time_ago_seconds_ago, diffSec)
+        diffMin < 1 -> stringResource(R.string.time_ago_just_now)
+        diffMin < 60 -> stringResource(R.string.time_ago_minutes_ago, diffMin)
+        else -> {
+            stringResource(R.string.time_ago_hours_ago, diffHours)
+        }
+    }
+}

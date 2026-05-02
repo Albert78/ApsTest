@@ -20,28 +20,19 @@ import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import de.dh.raaps.R
-import de.dh.raaps.core.api.ID_UNDEFINED
-import de.dh.raaps.core.api.data.BgSampleKind
-import de.dh.raaps.core.api.data.BgValue
 import de.dh.raaps.core.api.data.Minutes
-import de.dh.raaps.core.api.data.SmoothedBgSample
-import de.dh.raaps.core.api.data.Tick
-import de.dh.raaps.core.api.data.Timestamp
-import de.dh.raaps.model.ApsTickState
 import de.dh.raaps.ui.composables.screenTitle
 import de.dh.raaps.ui.controls.history.BgHistoryChart
 import de.dh.raaps.ui.controls.history.HistoryUiState
 import de.dh.raaps.ui.controls.history.HistoryViewModel
 import de.dh.raaps.ui.controls.history.createSampleHistoryTicks
 import de.dh.raaps.ui.theme.ApsTheme
-import kotlin.math.sin
-import kotlin.random.Random
 
 @Composable
 fun HistoryScreen(
     historyViewModel: HistoryViewModel
 ) {
-    val historyUiState by historyViewModel.uiState.collectAsState()
+    val historyUiState by historyViewModel.historyUiState.collectAsState()
 
     DashboardContent(
         historyUiState = historyUiState
@@ -89,7 +80,7 @@ fun createSampleHistoryUiState(): HistoryUiState {
     return HistoryUiState(
         isLoading = false,
         isError = false,
-        historyTicks = createSampleHistoryTicks(120),
+        historyTicks = createSampleHistoryTicks(120, 5),
         tickInterval = Minutes(5)
     )
 }
