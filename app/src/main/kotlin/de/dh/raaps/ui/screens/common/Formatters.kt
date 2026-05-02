@@ -117,14 +117,13 @@ fun shortDate(date: LocalDate?, default: String = "-"): String {
 fun shortRelativeTimeAgo(diffMs: Long): String {
     val diffSec = diffMs / 1000
     val diffMin = diffMs / 60000
-    val diffHours = diffMin / 60
     return when {
         diffSec < 5 -> stringResource(R.string.time_ago_just_now)
-        diffSec < 60 -> stringResource(R.string.time_ago_seconds_ago, diffSec)
+        diffSec < 61 -> stringResource(R.string.time_ago_seconds_ago, diffSec)
         diffMin < 1 -> stringResource(R.string.time_ago_just_now)
-        diffMin < 60 -> stringResource(R.string.time_ago_minutes_ago, diffMin)
+        diffMin < 91 -> stringResource(R.string.time_ago_minutes_ago, diffMin)
         else -> {
-            stringResource(R.string.time_ago_hours_ago, diffHours)
+            stringResource(R.string.time_ago_hours_ago, diffMin / 60)
         }
     }
 }

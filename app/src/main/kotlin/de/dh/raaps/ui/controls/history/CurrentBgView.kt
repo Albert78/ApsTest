@@ -186,7 +186,7 @@ fun createSampleGoodBgUiState(): CurrentBgUiState {
         delta = BgValue(+10),
         isDeltaValid = true,
         trend = BgTrend.FortyFiveUp,
-        timestamp = Timestamp.now().minusHours(2)
+        timestamp = Timestamp.now().minusMinutes(90)
     )
 }
 
@@ -277,7 +277,7 @@ fun BgGoodUpViewPreview() {
 
 @Preview(showBackground = true)
 @Composable
-fun BgGoodViewPreview() {
+fun BgGoodFlatViewPreview() {
     ApsTheme {
         CurrentBgView(
             currentBgUiState = CurrentBgUiState(
