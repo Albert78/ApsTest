@@ -154,7 +154,10 @@ fun DashboardContent(
                         style = MaterialTheme.typography.bodyLarge
                     )
 
-                    BgHistoryChart(historyUiState.historyTicks)
+                    BgHistoryChart(
+                        historyUiState.historyTicks,
+                        historyUiState.tickInterval
+                    )
                 }
             }
         }

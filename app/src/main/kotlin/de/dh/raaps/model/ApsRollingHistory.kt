@@ -6,7 +6,8 @@ import de.dh.raaps.core.api.data.Tick
 import de.dh.raaps.core.api.data.Timestamp
 
 data class ApsHistorySnapshot(
-    val ticks: List<ApsTickState?>
+    val ticks: List<ApsTickState?>,
+    val tickInterval: Minutes
 )
 
 class ApsRollingHistory(
@@ -113,7 +114,7 @@ class ApsRollingHistory(
     fun getSnapshot(): ApsHistorySnapshot {
         val currentAnchor = anchorTick
         if (currentAnchor == Tick.invalid()) {
-            return ApsHistorySnapshot(List(capacity) { null })
+            return ApsHistorySnapshot(List(capacity) { null }, tickDuration)
         }
 
         val result = List(capacity) { i ->
@@ -124,7 +125,7 @@ class ApsRollingHistory(
                 null
             }
         }
-        return ApsHistorySnapshot(result)
+        return ApsHistorySnapshot(result, tickDuration)
     }
 
     companion object {

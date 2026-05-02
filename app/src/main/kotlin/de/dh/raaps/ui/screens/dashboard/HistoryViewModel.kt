@@ -7,6 +7,7 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.CreationExtras
 import de.dh.raaps.MainApplication
+import de.dh.raaps.core.api.data.Minutes
 import de.dh.raaps.model.APS
 import de.dh.raaps.model.APSCoreState
 import de.dh.raaps.model.ApsHistorySnapshot
@@ -20,7 +21,8 @@ import kotlinx.coroutines.launch
 data class HistoryUiState(
     val isLoading: Boolean,
     val isError: Boolean,
-    val historyTicks: List<ApsTickState?> = listOf()
+    val historyTicks: List<ApsTickState?> = listOf(),
+    val tickInterval: Minutes = Minutes(5)
 )
 
 class HistoryViewModel(
@@ -60,7 +62,8 @@ class HistoryViewModel(
             HistoryUiState(
                 isLoading = false,
                 isError = false,
-                historyTicks = apsHistory.ticks
+                historyTicks = apsHistory.ticks,
+                tickInterval = apsHistory.tickInterval
             )
         }
     }

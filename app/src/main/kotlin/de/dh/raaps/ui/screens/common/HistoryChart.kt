@@ -5,93 +5,117 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import com.patrykandpatrick.vico.compose.cartesian.CartesianChartHost
+import com.patrykandpatrick.vico.compose.cartesian.CartesianDrawingContext
+import com.patrykandpatrick.vico.compose.cartesian.CartesianMeasuringContext
+import com.patrykandpatrick.vico.compose.cartesian.axis.Axis
 import com.patrykandpatrick.vico.compose.cartesian.axis.HorizontalAxis
 import com.patrykandpatrick.vico.compose.cartesian.axis.VerticalAxis
 import com.patrykandpatrick.vico.compose.cartesian.data.CartesianChartModelProducer
+import com.patrykandpatrick.vico.compose.cartesian.data.CartesianLayerRangeProvider
+import com.patrykandpatrick.vico.compose.cartesian.data.CartesianValueFormatter
 import com.patrykandpatrick.vico.compose.cartesian.data.lineSeries
 import com.patrykandpatrick.vico.compose.cartesian.layer.rememberLineCartesianLayer
 import com.patrykandpatrick.vico.compose.cartesian.rememberCartesianChart
+import com.patrykandpatrick.vico.compose.common.Position
+import com.patrykandpatrick.vico.compose.common.data.ExtraStore
+import de.dh.raaps.core.api.data.Minutes
 import de.dh.raaps.model.ApsTickState
-
-@Composable
-private fun BasicLineChart(
-    modelProducer: CartesianChartModelProducer,
-    modifier: Modifier = Modifier,
-) {
-    CartesianChartHost(
-        chart =
-            rememberCartesianChart(
-                rememberLineCartesianLayer(),
-                startAxis = VerticalAxis.rememberStart(),
-                bottomAxis = HorizontalAxis.rememberBottom(),
-            ),
-        modelProducer = modelProducer,
-        modifier = modifier,
-    )
-}
+import java.util.Calendar
+import java.util.Locale
 
 @Composable
 fun BgHistoryChart(
     tickStates: List<ApsTickState?>,
+    tickInterval: Minutes,
     modifier: Modifier = Modifier
 ) {
     val modelProducer = remember { CartesianChartModelProducer() }
 
-//    val glucoseSeries = LineSeries(
-//        dataPoints = listOf(
-//            ChartPoint(0f, 110f),
-//            ChartPoint(1f, 150f),
-//            ChartPoint(2f, 115f),
-//            ChartPoint(3f, 120f),
-//            ChartPoint(4f, 149f),
-//            ChartPoint(5f, 125f)
-//        ),
-//        dotColor = BlueA200,
-//        pathColor = Blue200,
-//        interpolation = Interpolation.Spline
-//    )
-//
-//    val highLine = LineSeries(
-//        dataPoints = listOf(
-//            ChartPoint(0f, 170f),
-//            ChartPoint(5f, 170f)
-//        ),
-//        dotColor = Orange600,
-//        pathColor = Orange600,
-//        showPoints = false,
-//        strokeWidth = 1.dp
-//    )
-//
-//    val lowLine = LineSeries(
-//        dataPoints = listOf(
-//            ChartPoint(0f, 60f),
-//            ChartPoint(5f, 60f)
-//        ),
-//        dotColor = Red400,
-//        pathColor = Red400,
-//        showPoints = false,
-//        strokeWidth = 1.dp
-//    )
-//
-//    val xAxis = AxisConfigBuilder()
-//        .range(0f, 5f)
-//        .steps(5)
-//        .build()
-//
-//    val yAxis = AxisConfigBuilder()
-//        .range(40f, 250f)
-//        .steps(
-//            4,
-//            { _ , value -> "${value.toInt()}"}
-//        )
-//        .build()
-//
-
-    LaunchedEffect(Unit) {
+    LaunchedEffect(tickStates) {
         modelProducer.runTransaction {
-            // Learn more: https://patrykandpatrick.com/z5ah6v.
-            lineSeries { series(13, 8, 7, 12, 0, 1, 15, 14, 0, 11, 6, 12, 0, 11, 12, 11) }
+            lineSeries {
+                val validIndices = tickStates.indices.filter { tickStates[it]?.bg != null }
+                series(
+                    x = validIndices.toList(),
+                    y = validIndices.map { tickStates[it]!!.bg!!.smoothedValue.mgdl.toFloat() }
+                )
+            }
         }
     }
-    BasicLineChart(modelProducer, modifier)
+
+    val xAxisValueFormatter = remember(tickStates, tickInterval) {
+        CartesianValueFormatter { _, x, _ ->
+            val state = tickStates.getOrNull(x.toInt()) ?: return@CartesianValueFormatter ""
+            val calendar = Calendar.getInstance().apply {
+                timeInMillis = state.tick.value.toLong() * tickInterval.value.toLong() * 60_000L
+            }
+            String.format(Locale.getDefault(), "%02d", calendar.get(Calendar.HOUR_OF_DAY))
+        }
+    }
+
+    val xItemPlacer = remember(tickStates, tickInterval) {
+        val ticksPerHour = 60 / tickInterval.value.toInt()
+        val firstTickValue = tickStates.firstOrNull()?.tick?.value ?: 0
+        val offset = (ticksPerHour - (firstTickValue % ticksPerHour)) % ticksPerHour
+        HorizontalAxis.ItemPlacer.aligned(spacing = { ticksPerHour }, offset = { offset })
+    }
+
+    val rangeProvider = remember {
+        object : CartesianLayerRangeProvider {
+            override fun getMinY(minY: Double, maxY: Double, extraStore: ExtraStore) = 40.0
+            override fun getMaxY(minY: Double, maxY: Double, extraStore: ExtraStore) = 250.0
+        }
+    }
+
+    val yAxisItemPlacer = remember {
+        object : VerticalAxis.ItemPlacer {
+            private val labelValues = listOf(50.0, 100.0, 150.0, 200.0, 250.0)
+
+            override fun getLabelValues(
+                context: CartesianDrawingContext,
+                axisHeight: Float,
+                maxLabelHeight: Float,
+                position: Axis.Position.Vertical,
+            ): List<Double> = labelValues
+
+            override fun getWidthMeasurementLabelValues(
+                context: CartesianMeasuringContext,
+                axisHeight: Float,
+                maxLabelHeight: Float,
+                position: Axis.Position.Vertical,
+            ): List<Double> = labelValues
+
+            override fun getHeightMeasurementLabelValues(
+                context: CartesianMeasuringContext,
+                position: Axis.Position.Vertical,
+            ): List<Double> = labelValues
+
+            override fun getTopLayerMargin(
+                context: CartesianMeasuringContext,
+                verticalLabelPosition: Position.Vertical,
+                maxLabelHeight: Float,
+                maxLineThickness: Float
+            ): Float = 0f
+
+            override fun getBottomLayerMargin(
+                context: CartesianMeasuringContext,
+                verticalLabelPosition: Position.Vertical,
+                maxLabelHeight: Float,
+                maxLineThickness: Float
+            ): Float = 0f
+        }
+    }
+
+    CartesianChartHost(
+        chart = rememberCartesianChart(
+            rememberLineCartesianLayer(rangeProvider = rangeProvider),
+            startAxis = VerticalAxis.rememberStart(itemPlacer = yAxisItemPlacer),
+            bottomAxis = HorizontalAxis.rememberBottom(
+                valueFormatter = xAxisValueFormatter,
+                itemPlacer = xItemPlacer
+            ),
+        ),
+        modelProducer = modelProducer,
+        modifier = modifier,
+    )
 }
