@@ -5,6 +5,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.withSave
 import androidx.compose.ui.unit.dp
 import com.patrykandpatrick.vico.compose.cartesian.CartesianChartHost
 import com.patrykandpatrick.vico.compose.cartesian.CartesianDrawingContext
@@ -18,6 +19,8 @@ import com.patrykandpatrick.vico.compose.cartesian.data.CartesianChartModelProdu
 import com.patrykandpatrick.vico.compose.cartesian.data.CartesianLayerRangeProvider
 import com.patrykandpatrick.vico.compose.cartesian.data.CartesianValueFormatter
 import com.patrykandpatrick.vico.compose.cartesian.data.lineSeries
+import com.patrykandpatrick.vico.compose.cartesian.decoration.Decoration
+import com.patrykandpatrick.vico.compose.cartesian.decoration.HorizontalBox
 import com.patrykandpatrick.vico.compose.cartesian.layer.LineCartesianLayer
 import com.patrykandpatrick.vico.compose.cartesian.layer.rememberLine
 import com.patrykandpatrick.vico.compose.cartesian.layer.rememberLineCartesianLayer
@@ -33,6 +36,8 @@ import de.dh.raaps.core.api.data.Minutes
 import de.dh.raaps.model.ApsTickState
 import de.dh.raaps.ui.composables.Blue200
 import de.dh.raaps.ui.composables.BlueA200
+import de.dh.raaps.ui.composables.OrangeA200
+import de.dh.raaps.ui.composables.Red400
 import java.util.Calendar
 import java.util.Locale
 
@@ -42,7 +47,9 @@ private const val INITIAL_SHOW_HOURS = 4.0
 fun BgHistoryChart(
     tickStates: List<ApsTickState?>,
     tickInterval: Minutes,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    lowBgThreshold: Double = 70.0,
+    highBgThreshold: Double = 170.0
 ) {
     val modelProducer = remember { CartesianChartModelProducer() }
 
@@ -140,6 +147,38 @@ fun BgHistoryChart(
         initialZoom = Zoom.x(INITIAL_SHOW_HOURS * 60.0 / tickInterval.value.toDouble())
     )
 
+    val lowBgBox = rememberShapeComponent(fill = Fill(Red400.copy(alpha = 0.2f)))
+    val highBgBox = rememberShapeComponent(fill = Fill(OrangeA200.copy(alpha = 0.2f)))
+
+    val decorations = remember(lowBgThreshold, highBgThreshold, lowBgBox, highBgBox) {
+        listOf(
+            HorizontalBox(
+                y = { 0.0..lowBgThreshold },
+                box = lowBgBox
+            ),
+            HorizontalBox(
+                y = { highBgThreshold..500.0 },
+                box = highBgBox
+            )
+        ).map { decoration ->
+            object : Decoration {
+                override fun drawUnderLayers(context: CartesianDrawingContext) {
+                    context.canvas.withSave {
+                        context.canvas.clipRect(context.layerBounds)
+                        decoration.drawUnderLayers(context)
+                    }
+                }
+
+                override fun drawOverLayers(context: CartesianDrawingContext) {
+                    context.canvas.withSave {
+                        context.canvas.clipRect(context.layerBounds)
+                        decoration.drawOverLayers(context)
+                    }
+                }
+            }
+        }
+    }
+
     CartesianChartHost(
         chart = rememberCartesianChart(
             rememberLineCartesianLayer(
@@ -164,6 +203,7 @@ fun BgHistoryChart(
                 valueFormatter = xAxisValueFormatter,
                 itemPlacer = xItemPlacer
             ),
+            decorations = decorations,
         ),
         modelProducer = modelProducer,
         scrollState = scrollState,
