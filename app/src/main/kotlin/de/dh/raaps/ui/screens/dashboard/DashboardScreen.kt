@@ -34,11 +34,12 @@ import androidx.compose.ui.unit.dp
 import de.dh.raaps.R
 import de.dh.raaps.ui.composables.WarningBanner
 import de.dh.raaps.ui.composables.screenTitle
-import de.dh.raaps.ui.controls.currentbg.CurrentBgUiState
-import de.dh.raaps.ui.controls.history.CurrentBgView
 import de.dh.raaps.ui.controls.history.BgHistoryChart
+import de.dh.raaps.ui.controls.history.CurrentBgUiState
+import de.dh.raaps.ui.controls.history.CurrentBgView
 import de.dh.raaps.ui.controls.history.HistoryUiState
 import de.dh.raaps.ui.controls.history.HistoryViewModel
+import de.dh.raaps.ui.controls.history.createSampleGoodBgUiState
 import de.dh.raaps.ui.screens.history.createSampleHistoryUiState
 import de.dh.raaps.ui.screens.permissions.PermissionStatus
 import de.dh.raaps.ui.screens.permissions.PermissionsUiModel
@@ -61,10 +62,9 @@ fun DashboardScreen(
     val permissionsUiState by permissionsViewModel.uiState.collectAsState()
 
     DashboardContent(
-        uiState = uiState,
+        dashboardUiState = uiState,
         currentBgUiState = currentBgUiState,
         historyUiState = historyUiState,
-        currentBgUiState = currentBgUiState,
         permissionsUiState = permissionsUiState,
         onFixPermissionsClick = onFixPermissions,
         onNavigateToPermissions = onNavigateToPermissions,
@@ -76,7 +76,7 @@ fun DashboardScreen(
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun DashboardContent(
-    uiState: DashboardUiState,
+    dashboardUiState: DashboardUiState,
     currentBgUiState: CurrentBgUiState,
     historyUiState: HistoryUiState,
     permissionsUiState: PermissionsUiModel,
@@ -150,7 +150,10 @@ fun DashboardContent(
                     )
                 }
 
-                CurrentBgView(currentBgUiState)
+                CurrentBgView(
+                    currentBgUiState,
+                    modifier = Modifier.align(Alignment.CenterHorizontally)
+                )
 
                 Text(
                     text = stringResource(R.string.dashboard_glucose_title),
@@ -184,7 +187,8 @@ fun DashboardContent(
 fun DashboardPreview() {
     ApsTheme {
         DashboardContent(
-            uiState = DashboardUiState(isLoading = false, isError = false),
+            dashboardUiState = DashboardUiState(isLoading = false, isError = false),
+            currentBgUiState = createSampleGoodBgUiState(),
             historyUiState = createSampleHistoryUiState(),
             permissionsUiState = PermissionsUiModel(
                 isLoading = false,
@@ -207,7 +211,8 @@ fun DashboardPreview() {
 fun DashboardPermissionsWarningPreview() {
     ApsTheme {
         DashboardContent(
-            uiState = DashboardUiState(isLoading = false, isError = false),
+            dashboardUiState = DashboardUiState(isLoading = false, isError = false),
+            currentBgUiState = createSampleGoodBgUiState(),
             historyUiState = createSampleHistoryUiState(),
             permissionsUiState = PermissionsUiModel(
                 isLoading = false,

@@ -1,5 +1,6 @@
 package de.dh.raaps.core.api.data
 
+import java.util.Locale
 import kotlin.math.roundToInt
 
 private const val MMOL_TO_MGDL = 18.0182
@@ -11,6 +12,18 @@ private const val MMOL_TO_MGDL = 18.0182
 value class BgValue(val mgdl: Short) {
     val mmol: Double
         get() = (mgdl / MMOL_TO_MGDL * 10.0).roundToInt() / 10.0
+
+    fun toString(glucoseUnit: GlucoseUnit) =
+        when (glucoseUnit) {
+            GlucoseUnit.MG_DL -> mgdl.toString()
+            GlucoseUnit.MMOL -> String.format(Locale.getDefault(), "%.1f", mmol)
+        }
+
+    fun toDiff(glucoseUnit: GlucoseUnit) =
+        when (glucoseUnit) {
+            GlucoseUnit.MG_DL -> String.format(Locale.getDefault(), "%+d", mgdl)
+            GlucoseUnit.MMOL -> String.format(Locale.getDefault(), "%+.1f", mmol)
+        }
 
     companion object {
         fun fromMgDl(value: Short): BgValue {
@@ -26,4 +39,3 @@ value class BgValue(val mgdl: Short) {
         }
     }
 }
-

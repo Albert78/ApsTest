@@ -114,8 +114,7 @@ fun shortDate(date: LocalDate?, default: String = "-"): String {
 /////////////////////////////////////////////// Time ago //////////////////////////////////////
 
 @Composable
-fun shortRelativeTimeAgo(timestamp: Timestamp): String {
-    val diffMs = System.currentTimeMillis() - timestamp.ms
+fun shortRelativeTimeAgo(diffMs: Long): String {
     val diffSec = diffMs / 1000
     val diffMin = diffMs / 60000
     val diffHours = diffMin / 60
@@ -128,4 +127,10 @@ fun shortRelativeTimeAgo(timestamp: Timestamp): String {
             stringResource(R.string.time_ago_hours_ago, diffHours)
         }
     }
+}
+
+@Composable
+fun shortRelativeTimeAgo(timestamp: Timestamp): String {
+    val diffMs = System.currentTimeMillis() - timestamp.ms
+    return shortRelativeTimeAgo(diffMs)
 }

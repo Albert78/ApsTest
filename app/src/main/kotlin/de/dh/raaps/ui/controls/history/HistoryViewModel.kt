@@ -7,6 +7,9 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.CreationExtras
 import de.dh.raaps.MainApplication
+import de.dh.raaps.core.api.ToDo
+import de.dh.raaps.core.api.data.BgValue
+import de.dh.raaps.core.api.data.GlucoseUnit
 import de.dh.raaps.core.api.data.Minutes
 import de.dh.raaps.core.api.data.Timestamp
 import de.dh.raaps.model.APS
@@ -18,7 +21,6 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-import kotlin.Int
 
 enum class BgTrend {
     DoubleUp,
@@ -34,10 +36,13 @@ enum class BgTrend {
 data class CurrentBgUiState(
     val isLoading: Boolean,
     val isError: Boolean,
-    val bgValue: Int = 0,
-    val delta: Int = 0,
+    val isValid: Boolean = false,
+    val bgValue: BgValue = BgValue(0),
+    val delta: BgValue = BgValue(0),
+    val isDeltaValid: Boolean = false,
     val trend: BgTrend = BgTrend.Flat,
-    val timestamp: Timestamp = Timestamp.now()
+    val timestamp: Timestamp = Timestamp.now(),
+    val glucoseUnit: GlucoseUnit = GlucoseUnit.MG_DL
 )
 
 data class HistoryUiState(
@@ -50,7 +55,10 @@ data class HistoryUiState(
 class HistoryViewModel(
     val application: MainApplication
 ) : AndroidViewModel(application) {
-    private val _currentBgUiState = MutableStateFlow(CurrentBgUiState(isLoading = true, isError = false))
+    private val _currentBgUiState = MutableStateFlow(CurrentBgUiState(
+        isLoading = true,
+        isError = false
+    ))
     val currentBgUiState = _currentBgUiState.asStateFlow()
 
     private val _historyUiState = MutableStateFlow(HistoryUiState(isLoading = true, isError = false))
@@ -81,15 +89,73 @@ class HistoryViewModel(
     }
 
     private fun updateUiModel(apsHistory: ApsHistorySnapshot) {
+        val timestampNowMs = Timestamp.now().ms
+        val limitMs = 20 * 60 * 1000L
+        val ticksWithBg = apsHistory.ticks.filterNotNull().filter {
+            it.bg != null && (timestampNowMs - it.bg!!.timestamp.ms) <= limitMs
+        }
+        val latest = ticksWithBg.lastOrNull()
+
+        // TODO: Read from preferences
+        ToDo.toBeImplemented("Read glucose unit from preferences")
+        val glucoseUnit = GlucoseUnit.MG_DL
+
         _currentBgUiState.update {
-            CurrentBgUiState(
-                isLoading = false,
-                isError = false,
-                bgValue = ,
-                delta = ,
-                trend = ,
-                timestamp =
-            )
+            if (latest == null) {
+                it.copy(isLoading = false, isError = false, isValid = false)
+            } else {
+                val bgValue = latest.bg!!.smoothedValue
+
+                // Calculate trend using linear regression over the points in the window
+                val n = ticksWithBg.size
+                val (regressionDelta5m, deltaValid) = if (n >= 2) {
+                    val firstTs = ticksWithBg.first().bg!!.timestamp.ms
+                    var sumX = 0.0
+                    var sumY = 0.0
+                    var sumXY = 0.0
+                    var sumXX = 0.0
+                    ticksWithBg.forEach { tick ->
+                        val x = (tick.bg!!.timestamp.ms - firstTs) / 60000.0
+                        val y = tick.bg!!.smoothedValue.mgdl.toDouble()
+                        sumX += x
+                        sumY += y
+                        sumXY += x * y
+                        sumXX += x * x
+                    }
+                    val denominator = n * sumXX - sumX * sumX
+                    if (denominator != 0.0) {
+                        val slopePerMin = (n * sumXY - sumX * sumY) / denominator
+                        Pair(
+                            slopePerMin * 5.0, // Normalize to a 5-minute interval
+                            true
+                        )
+                    } else Pair(0.0, true)
+                } else {
+                    Pair(0.0, false)
+                }
+
+                val trend = when {
+                    regressionDelta5m >= 14.0 -> BgTrend.DoubleUp
+                    regressionDelta5m >= 10.0 -> BgTrend.SingleUp
+                    regressionDelta5m >= 6.0 -> BgTrend.FortyFiveUp
+                    regressionDelta5m <= -14.0 -> BgTrend.DoubleDown
+                    regressionDelta5m <= -10.0 -> BgTrend.SingleDown
+                    regressionDelta5m <= -6.0 -> BgTrend.FortyFiveDown
+                    else -> BgTrend.Flat
+                }
+
+                CurrentBgUiState(
+                    isLoading = false,
+                    isError = false,
+                    isValid = true,
+                    bgValue = bgValue,
+                    delta = BgValue.fromMgDl(regressionDelta5m.toInt()),
+                    isDeltaValid = deltaValid,
+                    trend = trend,
+                    timestamp = latest.bg!!.timestamp,
+                    glucoseUnit = glucoseUnit
+                )
+            }
         }
 
         _historyUiState.update {
