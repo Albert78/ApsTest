@@ -22,6 +22,7 @@ import com.patrykandpatrick.vico.compose.cartesian.rememberVicoScrollState
 import com.patrykandpatrick.vico.compose.cartesian.rememberVicoZoomState
 import com.patrykandpatrick.vico.compose.common.Position
 import com.patrykandpatrick.vico.compose.common.data.ExtraStore
+import de.dh.raaps.core.api.data.BgSampleKind
 import de.dh.raaps.core.api.data.Minutes
 import de.dh.raaps.model.ApsTickState
 import java.util.Calendar
@@ -40,7 +41,10 @@ fun BgHistoryChart(
     LaunchedEffect(tickStates) {
         modelProducer.runTransaction {
             lineSeries {
-                val validIndices = tickStates.indices.filter { tickStates[it]?.bg != null }
+                val validIndices = tickStates.indices.filter {
+                    val bg = tickStates[it]?.bg ?: return@filter false
+                    return@filter bg.sampleKind != BgSampleKind.Invalid
+                }
                 series(
                     x = validIndices.toList(),
                     y = validIndices.map { tickStates[it]!!.bg!!.smoothedValue.mgdl.toFloat() }
