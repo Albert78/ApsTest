@@ -38,7 +38,6 @@ import de.dh.raaps.ui.composables.Red
 import de.dh.raaps.ui.composables.Yellow
 import de.dh.raaps.ui.screens.common.shortRelativeTimeAgo
 import de.dh.raaps.ui.theme.ApsTheme
-import java.util.Locale
 
 @Composable
 fun CurrentBgView(
@@ -58,13 +57,18 @@ fun CurrentBgView(
         }
     }
 
-    val bgColor = when {
-        currentBgUiState.bgValue.mgdl < 50 -> Red
-        currentBgUiState.bgValue.mgdl < 70 -> Yellow
-        currentBgUiState.bgValue.mgdl < 180 -> LightGreenA700
-        currentBgUiState.bgValue.mgdl < 250 -> Yellow
-        else -> Red
-    }
+    val bgColor =
+        when (currentBgUiState.state) {
+            CurrentBgState.Valid -> when {
+                currentBgUiState.bgValue.mgdl < 50 -> Red
+                currentBgUiState.bgValue.mgdl < 70 -> Yellow
+                currentBgUiState.bgValue.mgdl < 180 -> LightGreenA700
+                currentBgUiState.bgValue.mgdl < 250 -> Yellow
+                else -> Red
+            }
+            CurrentBgState.Old -> Color.DarkGray
+            else -> Color.DarkGray
+        }
 
     val trendAngle = when (currentBgUiState.trend) {
         BgTrend.DoubleUp -> -60f
@@ -88,7 +92,7 @@ fun CurrentBgView(
             val mainRadius = size.width * 0.4f
             val strokeWidth = 6.dp.toPx()
 
-            // Pale Blue Ring
+            // Background: Pale Blue Ring
             drawCircle(
                 color = AppColorBlue.copy(alpha = 0.3f),
                 radius = mainRadius,
@@ -96,7 +100,8 @@ fun CurrentBgView(
                 style = Stroke(width = strokeWidth)
             )
 
-            if (currentBgUiState.isValid) {
+            // Trend indicator
+            if (currentBgUiState.state == CurrentBgState.Valid) {
                 // Highlight Arc around the trend
                 drawArc(
                     color = AppColorBlue,
@@ -138,7 +143,7 @@ fun CurrentBgView(
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.spacedBy((-6).dp)
         ) {
-            val deltaText = if (currentBgUiState.isValid && currentBgUiState.isDeltaValid)
+            val deltaText = if (currentBgUiState.state == CurrentBgState.Valid && currentBgUiState.isDeltaValid)
                 currentBgUiState.delta.toDiff(currentBgUiState.glucoseUnit)
             else
                 ""
@@ -147,7 +152,10 @@ fun CurrentBgView(
                 style = MaterialTheme.typography.bodyMedium,
                 color = Color.Gray
             )
-            val centerText = if (currentBgUiState.isValid) currentBgUiState.bgValue.toString(currentBgUiState.glucoseUnit) else "?"
+            val centerText = if (currentBgUiState.state == CurrentBgState.Valid || currentBgUiState.state == CurrentBgState.Old)
+                currentBgUiState.bgValue.toString(currentBgUiState.glucoseUnit)
+            else
+                "?"
             Text(
                 text = centerText,
                 style = MaterialTheme.typography.displayLarge.copy(
@@ -157,7 +165,7 @@ fun CurrentBgView(
                 ),
                 color = bgColor
             )
-            val timeAgoText = if (currentBgUiState.isValid) {
+            val timeAgoText = if (currentBgUiState.state != CurrentBgState.Invalid) {
                 shortRelativeTimeAgo(diffMs)
             } else ""
             Text(
@@ -173,7 +181,7 @@ fun createSampleGoodBgUiState(): CurrentBgUiState {
     return CurrentBgUiState(
         isLoading = false,
         isError = false,
-        isValid = true,
+        state = CurrentBgState.Valid,
         bgValue = BgValue(125),
         delta = BgValue(+10),
         isDeltaValid = true,
@@ -190,11 +198,31 @@ fun BgInvalidViewPreview() {
             currentBgUiState = CurrentBgUiState(
                 isLoading = false,
                 isError = false,
-                isValid = false,
+                state = CurrentBgState.Invalid,
                 bgValue = BgValue(325),
                 delta = BgValue(+20),
+                isDeltaValid = false,
                 trend = BgTrend.DoubleUp,
                 timestamp = Timestamp.now().minusMinutes(3)
+            )
+        )
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+fun BgOldViewPreview() {
+    ApsTheme {
+        CurrentBgView(
+            currentBgUiState = CurrentBgUiState(
+                isLoading = false,
+                isError = false,
+                state = CurrentBgState.Old,
+                bgValue = BgValue(110),
+                delta = BgValue(+20),
+                isDeltaValid = false,
+                trend = BgTrend.DoubleUp,
+                timestamp = Timestamp.now().minusHours(3)
             )
         )
     }
@@ -208,7 +236,7 @@ fun BgVeryHighViewPreview() {
             currentBgUiState = CurrentBgUiState(
                 isLoading = false,
                 isError = false,
-                isValid = true,
+                state = CurrentBgState.Valid,
                 bgValue = BgValue(325),
                 delta = BgValue(+20),
                 trend = BgTrend.DoubleUp,
@@ -226,7 +254,7 @@ fun BgHighViewPreview() {
             currentBgUiState = CurrentBgUiState(
                 isLoading = false,
                 isError = false,
-                isValid = true,
+                state = CurrentBgState.Valid,
                 bgValue = BgValue(225),
                 delta = BgValue(+15),
                 isDeltaValid = true,
@@ -255,7 +283,7 @@ fun BgGoodViewPreview() {
             currentBgUiState = CurrentBgUiState(
                 isLoading = false,
                 isError = false,
-                isValid = true,
+                state = CurrentBgState.Valid,
                 bgValue = BgValue(125),
                 delta = BgValue(+0),
                 isDeltaValid = true
@@ -272,7 +300,7 @@ fun BgLowViewPreview() {
             currentBgUiState = CurrentBgUiState(
                 isLoading = false,
                 isError = false,
-                isValid = true,
+                state = CurrentBgState.Valid,
                 bgValue = BgValue(60),
                 delta = BgValue(-5),
                 trend = BgTrend.FortyFiveDown
@@ -289,7 +317,7 @@ fun BgVeryLowViewPreview() {
             currentBgUiState = CurrentBgUiState(
                 isLoading = false,
                 isError = false,
-                isValid = true,
+                state = CurrentBgState.Valid,
                 bgValue = BgValue(45),
                 delta = BgValue(-10),
                 isDeltaValid = true,

@@ -33,10 +33,13 @@ enum class BgTrend {
     NotComputable
 }
 
+enum class CurrentBgState {
+    Valid, Old, Invalid
+}
 data class CurrentBgUiState(
     val isLoading: Boolean,
     val isError: Boolean,
-    val isValid: Boolean = false,
+    val state: CurrentBgState = CurrentBgState.Invalid,
     val bgValue: BgValue = BgValue(0),
     val delta: BgValue = BgValue(0),
     val isDeltaValid: Boolean = false,
@@ -89,32 +92,56 @@ class HistoryViewModel(
     }
 
     private fun updateUiModel(apsHistory: ApsHistorySnapshot) {
-        val timestampNowMs = Timestamp.now().ms
-        val limitMs = 20 * 60 * 1000L
-        val ticksWithBg = apsHistory.ticks.filterNotNull().filter {
-            it.bg != null && (timestampNowMs - it.bg!!.timestamp.ms) <= limitMs
-        }
-        val latest = ticksWithBg.lastOrNull()
-
         // TODO: Read from preferences
         ToDo.toBeImplemented("Read glucose unit from preferences")
         val glucoseUnit = GlucoseUnit.MG_DL
 
+        val timestampNowMs = Timestamp.now().ms
+        val limitMs = timestampNowMs - 20 * 60 * 1000L
+        val recentTicksWithBg = apsHistory.ticks.filterNotNull().filter {
+            it.bg != null && it.bg!!.timestamp.ms >= limitMs
+        }
+        val latest = recentTicksWithBg.lastOrNull()
+
         _currentBgUiState.update {
             if (latest == null) {
-                it.copy(isLoading = false, isError = false, isValid = false)
+                val limit2HoursMs = 2 * 60 * 60 * 1000L
+                val olderTickData = apsHistory.ticks
+                    .map({ tickState -> Pair(tickState?.bg, tickState?.bg?.timestamp) })
+                    .lastOrNull(
+                        { pair ->
+                            val bg = pair.first
+                            val timestamp = pair.second
+                            return@lastOrNull bg != null && timestamp != null && timestamp.ms > limit2HoursMs
+                        }
+                    )
+                if (olderTickData == null) {
+                    it.copy(isLoading = false, isError = false, state = CurrentBgState.Invalid)
+                } else {
+                    // Older tick state present
+                    val bg = olderTickData.first!!
+                    val timestamp = olderTickData.second!!
+                    it.copy(
+                        isLoading = false,
+                        isError = false,
+                        state = CurrentBgState.Old,
+                        bgValue = bg.origValue,
+                        isDeltaValid = false,
+                        timestamp = timestamp
+                    )
+                }
             } else {
                 val bgValue = latest.bg!!.smoothedValue
 
                 // Calculate trend using linear regression over the points in the window
-                val n = ticksWithBg.size
+                val n = recentTicksWithBg.size
                 val (regressionDelta5m, deltaValid) = if (n >= 2) {
-                    val firstTs = ticksWithBg.first().bg!!.timestamp.ms
+                    val firstTs = recentTicksWithBg.first().bg!!.timestamp.ms
                     var sumX = 0.0
                     var sumY = 0.0
                     var sumXY = 0.0
                     var sumXX = 0.0
-                    ticksWithBg.forEach { tick ->
+                    recentTicksWithBg.forEach { tick ->
                         val x = (tick.bg!!.timestamp.ms - firstTs) / 60000.0
                         val y = tick.bg!!.smoothedValue.mgdl.toDouble()
                         sumX += x
@@ -147,7 +174,7 @@ class HistoryViewModel(
                 CurrentBgUiState(
                     isLoading = false,
                     isError = false,
-                    isValid = true,
+                    state = CurrentBgState.Valid,
                     bgValue = bgValue,
                     delta = BgValue.fromMgDl(regressionDelta5m.toInt()),
                     isDeltaValid = deltaValid,
