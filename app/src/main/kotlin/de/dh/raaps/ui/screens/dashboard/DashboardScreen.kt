@@ -45,6 +45,7 @@ import de.dh.raaps.ui.screens.permissions.PermissionStatus
 import de.dh.raaps.ui.screens.permissions.PermissionsUiModel
 import de.dh.raaps.ui.screens.permissions.PermissionsViewModel
 import de.dh.raaps.ui.theme.ApsTheme
+import kotlin.math.sin
 import kotlin.random.Random
 
 @Composable
@@ -168,11 +169,17 @@ fun DashboardContent(
 }
 
 fun createSampleHistoryUiState(): HistoryUiState {
-    fun randomBg(index: Int): SmoothedBgSample {
-        val bg = 50 + Random.nextInt(100)
+    fun generatedBg(index: Int): SmoothedBgSample {
+        // Base curve: average 120, fluctuation of +/- 50 using overlapping sine waves
+        val base = 170.0
+        val curve = 100.0 * sin(index / 10.0) + 15.0 * sin(index / 12.0)
+        val noise = Random.nextDouble(-5.0, 5.0)
+
+        val bgValue = (base + curve + noise).toInt().coerceIn(40, 400)
+
         return SmoothedBgSample(
-            BgValue.fromMgDl(bg),
-            BgValue.fromMgDl(bg + 10),
+            BgValue.fromMgDl(bgValue),
+            BgValue.fromMgDl(bgValue),
             BgSampleKind.Value,
             Timestamp(index.toLong())
         )
@@ -180,11 +187,11 @@ fun createSampleHistoryUiState(): HistoryUiState {
     return HistoryUiState(
         isLoading = false,
         isError = false,
-        historyTicks = List(600, { index ->
+        historyTicks = List(600) { index ->
             ApsTickState(
-                ID_UNDEFINED, Tick(index), randomBg(index)
+                ID_UNDEFINED, Tick(index), generatedBg(index)
             )
-        } )
+        }
     )
 }
 
