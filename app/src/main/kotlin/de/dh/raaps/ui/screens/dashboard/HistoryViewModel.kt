@@ -8,8 +8,11 @@ import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.CreationExtras
 import de.dh.raaps.MainApplication
 import de.dh.raaps.model.APS
+import de.dh.raaps.model.APSCoreState
+import de.dh.raaps.model.ApsHistorySnapshot
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
@@ -29,10 +32,11 @@ class HistoryViewModel(
 
     init {
         viewModelScope.launch {
-            // TODO: Listen to APS state, if APS finished initializing, do the reload
+            // This will block the thread until the core is idle
+            aps.coreState.first { it == APSCoreState.Idle }
             reload_suspend()
             aps.lastDataTime.collect {
-                updateHistory(aps.rollingHistory.getSnapshot())
+                reload_suspend()
             }
         }
     }
@@ -44,45 +48,10 @@ class HistoryViewModel(
     }
 
     private suspend fun reload_suspend() {
-//        try {
-//            val (escd, nled) = withContext(Dispatchers.IO) {
-//                val esConfigData = repository.getEventSeriesConfig(eventSeriesId)!!
-//                val nled = repository.getNextLastEventsData(eventSeriesId)!!
-//                Pair(esConfigData, nled)
-//            }
-//            // If we had a situation that the next event could be deleted asynchronously from
-//            // outside, we could leave here via sending a "leave" event. Currently not necessary.
-//            esConfigData = escd
-//            lastEventDateTime = nled.lastPastEventData?.dateTime
-//            nextEventDateCalculator = NextEventDateCalculator(escd)
-//            nextSuggestedEventBySchedule = nextEventDateCalculator?.calculateNextEventDate(
-//                lastEventDateTime,
-//                Constants.DEFAULT_TIME_ZONE_ID,
-//                escd.scheduleOnWorkdaysOnly
-//            )
-//
-//            if (resetEditData) {
-//                val ed = savedStateHandle.decodeFromState<NextEventEditData>(KEY_EDIT_DATA) ?: NextEventEditData.createDefault()
-//                ed.merge(nled, escd)
-//                editData = ed
-//            }
-//        } catch (_: Exception) {
-//            esConfigData = null
-//            lastEventDateTime = null
-//            nextEventDateCalculator = null
-//            nextSuggestedEventBySchedule = null
-//            editData = null
-//        }
-        updateUiModel()
+        updateUiModel(aps.rollingHistory.getSnapshot())
     }
 
-    private fun updateUiModel() {
-//        val ed = editData
-//        val esCD = esConfigData
-//        if (ed == null || esCD == null) {
-//            _uiState.update { DashboardUiState(isLoading = false, isError = true) }
-//            return
-//        }
+    private fun updateUiModel(apsHistory: ApsHistorySnapshot) {
         val res = application.resources
 
         // TODO: Prepare data

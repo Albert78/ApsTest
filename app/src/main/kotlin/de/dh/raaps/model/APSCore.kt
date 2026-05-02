@@ -11,14 +11,12 @@ import de.dh.raaps.data.DataRepository
 import de.dh.raaps.service.persist
 import de.dh.raaps.service.smoothGlucoseSmart_1_Minute_Readings
 import de.dh.raaps.service.smoothGlucoseSmart_5_Minute_Readings
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 
 enum class APSCoreState {
+    Plain,
     Initializing,
     Calculating,
     Idle,
@@ -34,13 +32,19 @@ enum class APSCoreState {
  */
 class APSCore(
     val dataRepository: DataRepository,
-    private val onDataUpdated: () -> Unit
+    private val onDataUpdated: () -> Unit,
+    private val onCoreStateChanged: () -> Unit,
+    private val onAcquireBusyState: () -> Unit,
+    private val onReleaseBusyState: () -> Unit
 ) {
     // State
     var rollingHistory: ApsRollingHistory = ApsRollingHistory(historyHours = 0, tickDuration = Minutes(5))
     var currentBg: SmoothedBgSample? = null
         private set
     var lastBg: SmoothedBgSample? = null
+        private set
+
+    var coreState: APSCoreState = APSCoreState.Plain
         private set
 
     /**
@@ -50,14 +54,6 @@ class APSCore(
      */
     var glucoseReadingsTimeDelay: Minutes = Minutes(0)
 
-    private val _coreState = MutableStateFlow(APSCoreState.Initializing)
-    val coreState: StateFlow<APSCoreState> = _coreState.asStateFlow()
-
-    // Signal to the facade that the core is currently performing critical work. If the
-    // busy state is bigger than 0, the core is working and needs a wake lock.
-    private val _busyState = MutableStateFlow(0)
-    val busyState: StateFlow<Int> = _busyState.asStateFlow()
-
     /**
      * Lock which is acquired in situations where a suspend function
      * must be atomic. Other functions don't need to be locked since
@@ -65,11 +61,29 @@ class APSCore(
      */
     private val atomicOperationLock = Mutex()
 
+    /**
+     * Block marker for code blocks which need a wake lock in the system.
+     * If blocks are not marked with this marker, the processor can go into sleep mode any time.
+     */
+    private suspend fun <T> busyWork(block: suspend () -> T): T {
+        onAcquireBusyState()
+        try {
+            return block()
+        } finally {
+            onReleaseBusyState()
+        }
+    }
+
+    private fun setCoreState(state: APSCoreState) {
+        coreState = state
+        onCoreStateChanged()
+    }
+
     suspend fun initialize() {
         atomicOperationLock.withLock {
-            _coreState.emit(APSCoreState.Initializing)
+            setCoreState(APSCoreState.Initializing)
             rollingHistory = initializeRollingHistory(dataRepository)
-            _coreState.emit(APSCoreState.Idle)
+            setCoreState(APSCoreState.Idle)
         }
     }
 
@@ -122,6 +136,9 @@ class APSCore(
 
         // Collect for core calculation
         smoothedValues
+            // Threading notice:
+            // Since we're in a coroutine, this collect call won't block our (single) thread; instead,
+            // it will just suspend and free the thread for other work.
             .collect { bg ->
                 updateBg(bg)
             }
@@ -153,19 +170,6 @@ class APSCore(
      */
     fun recalculate() {
         // TODO: Implement therapy algorithm (IOB, COB, Prediction, Temp Basal)
-    }
-
-    /**
-     * Block marker for code blocks which need a wake lock in the system.
-     * If blocks are not marked with this marker, the processor can go into sleep mode any time.
-     */
-    private suspend fun <T> busyWork(block: suspend () -> T): T {
-        _busyState.value++
-        try {
-            return block()
-        } finally {
-            _busyState.value--
-        }
     }
 
     private suspend fun initializeRollingHistory(dataRepository: DataRepository): ApsRollingHistory {

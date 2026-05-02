@@ -17,7 +17,10 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import java.util.concurrent.Executors
+import java.util.concurrent.atomic.AtomicInteger
 
 /**
  * APS system facade for the access from outside (UI, ...).
@@ -32,14 +35,21 @@ class APS(
     private val apsDispatcher = Executors.newSingleThreadExecutor().asCoroutineDispatcher()
     private val apsScope = CoroutineScope(apsDispatcher + SupervisorJob())
 
+    private val atomicOperationLock = Mutex()
+
+    private val recursiveBusyState: AtomicInteger = AtomicInteger(0)
+
     // Power Management
     private val powerManager = context.getSystemService(Context.POWER_SERVICE) as PowerManager
     private val wakeLock = powerManager.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, "raaps:ApsCoreLock")
 
     // Computation Core: Pure logic and state, completely thread-agnostic
-    private val core = APSCore(
-        dataRepository,
-        { emitDataUpdateEvent() }
+    private val core: APSCore = APSCore(
+        dataRepository = dataRepository,
+        onDataUpdated = { emitDataUpdateEvent() },
+        onCoreStateChanged = { emitCoreStateChangedEvent() },
+        onAcquireBusyState = { acquireBusyState() },
+        onReleaseBusyState = { releaseBusyState() }
     )
 
     // Plugins & Active Jobs
@@ -68,27 +78,73 @@ class APS(
     private val _lastDataTime = MutableStateFlow<Timestamp>(Timestamp(0))
     val lastDataTime: StateFlow<Timestamp> = _lastDataTime.asStateFlow()
 
+    private val _coreState = MutableStateFlow(APSCoreState.Initializing)
+    /**
+     * State of the core.
+     * Watch the core state to be notified when it changes, e.g.:
+     * ```
+     * aps.coreState.first { it == APSCoreState.Idle }
+     * ```
+     */
+    val coreState: StateFlow<APSCoreState> = _coreState.asStateFlow()
+
+    /**
+     * Executes the given block atomically.
+     */
+    private suspend fun <T> atomic(block: suspend () -> T): T {
+        return atomicOperationLock.withLock {
+            block()
+        }
+    }
+
+    /**
+     * Executes the given block on the internal APS thread.
+     */
+    private fun inAPSThread(block: suspend CoroutineScope.() -> Unit): Job {
+        return apsScope.launch {
+            block()
+        }
+    }
+
+    /**
+     * Executes the given block in a thread of the default dispatcher for
+     * async executions of outgoing events.
+     */
+    private fun inExternalDispatcher(block: suspend CoroutineScope.() -> Unit): Job {
+        return apsScope.launch(Dispatchers.Default) {
+            block()
+        }
+    }
+
+    /**
+     * Starts the initialization of the APS core asynchronously.
+     * See [coreState].
+     */
     fun startInitialization() {
-        installWakeLockManager()
-        core.initialize()
+        inAPSThread {
+            atomic {
+                core.initialize()
+            }
+        }
         restartGlucosePipeline()
     }
 
-    private fun installWakeLockManager() {
-        // Collect busy state on a separate scope to ensure it's not blocked by core calculation
-        apsScope.launch(Dispatchers.Default) {
-            core.busyState.collect { busyState ->
-                if (busyState > 0) {
-                    if (!wakeLock.isHeld) wakeLock.acquire(5_000) // 5s safety timeout
-                } else {
-                    if (wakeLock.isHeld) {
-                        try {
-                            wakeLock.release()
-                        } catch (e: RuntimeException) {
-                            // Ignore if already released
-                        }
-                    }
-                }
+    private fun acquireBusyState() {
+        recursiveBusyState.incrementAndGet()
+        if (!wakeLock.isHeld) wakeLock.acquire(5_000)
+    }
+
+    private fun releaseBusyState() {
+        val busyState = recursiveBusyState.decrementAndGet()
+        if (busyState > 0) {
+            // Still busy
+            return
+        }
+        if (wakeLock.isHeld) {
+            try {
+                wakeLock.release()
+            } catch (e: RuntimeException) {
+                // Ignore if already released
             }
         }
     }
@@ -97,7 +153,7 @@ class APS(
         glucoseJob?.cancel() // Cancel old pipeline if one exists
         val plugin = glucosePlugin ?: return
 
-        glucoseJob = apsScope.launch {
+        glucoseJob = inAPSThread {
             installGlucosePipeline_ApsThread(plugin)
         }
     }
@@ -109,18 +165,20 @@ class APS(
         core.installGlucosePipeline(plugin, dataProvider, sensorType)
     }
 
-    private fun emitDataUpdateEvent() {
-        apsScope.launch(Dispatchers.Default) {
-            _lastDataTime.emit(Timestamp.now())
-        }
+    private fun emitDataUpdateEvent() = inExternalDispatcher {
+        _lastDataTime.emit(Timestamp.now())
+    }
+
+    private fun emitCoreStateChangedEvent() = inExternalDispatcher {
+        _coreState.emit(core.coreState)
     }
 
     /**
      * Entry point for external BG updates.
      * Guaranteed to run on the internal APS thread.
      */
-    fun updateBg(bg: SmoothedBgSample) {
-        apsScope.launch {
+    fun updateBg(bg: SmoothedBgSample) = inAPSThread {
+        atomic {
             core.updateBg(bg)
         }
     }

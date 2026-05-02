@@ -79,7 +79,7 @@ class ApsRollingHistory(
 
     fun replaceBufferTickStates(tickStates: List<ApsTickState>) {
         // Clear buffer
-        for (i in 0..capacity) {
+        for (i in 0..<capacity) {
             buffer[i] = null
         }
 
@@ -91,13 +91,13 @@ class ApsRollingHistory(
                 continue
             }
             val index = bufferIndex(loadedState.tick)
-            if (index in 0..capacity) {
+            if (index in 0..<capacity) {
                 buffer[index] = loadedState
             }
         }
 
         // Fill empty buffer spaces with empty tick states
-        for (i in 0..capacity) {
+        for (i in 0..<capacity) {
             val tick = Tick(firstTick.value + i)
             val index = bufferIndex(tick)
             if (buffer[index] == null) {

@@ -47,8 +47,9 @@ class MainApplication : Application() {
 
         startApsService()
 
-        // TODO: Decouple initialization of APS system
         aps = APS(this, dataRepository)
+        aps.startInitialization()
+
         // TODO: Read plugins from preferences
         aps.pumpPlugin = SamplePumpPlugin()
         aps.glucosePlugin = ReceiverGlucosePlugin(this, ExternalSourceType.xDrip1Min)
