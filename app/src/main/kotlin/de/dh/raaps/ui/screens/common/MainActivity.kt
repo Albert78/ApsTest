@@ -34,7 +34,7 @@ import de.dh.raaps.ui.composables.EdgeToEdgeHandler
 import de.dh.raaps.ui.screens.dashboard.DashboardScreen
 import de.dh.raaps.ui.screens.dashboard.DashboardViewModel
 import de.dh.raaps.ui.screens.history.HistoryScreen
-import de.dh.raaps.ui.screens.history.HistoryViewModel
+import de.dh.raaps.ui.controls.history.HistoryViewModel
 import de.dh.raaps.ui.screens.permissions.PermissionsScreen
 import de.dh.raaps.ui.screens.permissions.PermissionsViewModel
 import de.dh.raaps.ui.screens.permissions.canPostNotifications

@@ -23,12 +23,16 @@ import de.dh.raaps.R
 import de.dh.raaps.core.api.ID_UNDEFINED
 import de.dh.raaps.core.api.data.BgSampleKind
 import de.dh.raaps.core.api.data.BgValue
+import de.dh.raaps.core.api.data.Minutes
 import de.dh.raaps.core.api.data.SmoothedBgSample
 import de.dh.raaps.core.api.data.Tick
 import de.dh.raaps.core.api.data.Timestamp
 import de.dh.raaps.model.ApsTickState
 import de.dh.raaps.ui.composables.screenTitle
-import de.dh.raaps.ui.screens.common.BgHistoryChart
+import de.dh.raaps.ui.controls.history.BgHistoryChart
+import de.dh.raaps.ui.controls.history.HistoryUiState
+import de.dh.raaps.ui.controls.history.HistoryViewModel
+import de.dh.raaps.ui.controls.history.createSampleHistoryTicks
 import de.dh.raaps.ui.theme.ApsTheme
 import kotlin.math.sin
 import kotlin.random.Random
@@ -82,35 +86,17 @@ fun DashboardContent(
 }
 
 fun createSampleHistoryUiState(): HistoryUiState {
-    fun generatedBg(index: Int): SmoothedBgSample {
-        // Base curve: average 120, fluctuation of +/- 50 using overlapping sine waves
-        val base = 170.0
-        val curve = 100.0 * sin(index / 10.0) + 15.0 * sin(index / 12.0)
-        val noise = Random.nextDouble(-5.0, 5.0)
-
-        val bgValue = (base + curve + noise).toInt().coerceIn(40, 400)
-
-        return SmoothedBgSample(
-            BgValue.fromMgDl(bgValue),
-            BgValue.fromMgDl(bgValue),
-            BgSampleKind.Value,
-            Timestamp(index.toLong())
-        )
-    }
     return HistoryUiState(
         isLoading = false,
         isError = false,
-        historyTicks = List(600) { index ->
-            ApsTickState(
-                ID_UNDEFINED, Tick(index), generatedBg(index)
-            )
-        }
+        historyTicks = createSampleHistoryTicks(120),
+        tickInterval = Minutes(5)
     )
 }
 
 @Preview(showBackground = true)
 @Composable
-fun DashboardPreview() {
+fun HistoryScreenPreview() {
     ApsTheme {
         DashboardContent(
             historyUiState = createSampleHistoryUiState()

@@ -34,9 +34,9 @@ import androidx.compose.ui.unit.dp
 import de.dh.raaps.R
 import de.dh.raaps.ui.composables.WarningBanner
 import de.dh.raaps.ui.composables.screenTitle
-import de.dh.raaps.ui.screens.common.BgHistoryChart
-import de.dh.raaps.ui.screens.history.HistoryUiState
-import de.dh.raaps.ui.screens.history.HistoryViewModel
+import de.dh.raaps.ui.controls.history.BgHistoryChart
+import de.dh.raaps.ui.controls.history.HistoryUiState
+import de.dh.raaps.ui.controls.history.HistoryViewModel
 import de.dh.raaps.ui.screens.history.createSampleHistoryUiState
 import de.dh.raaps.ui.screens.permissions.PermissionStatus
 import de.dh.raaps.ui.screens.permissions.PermissionsUiModel

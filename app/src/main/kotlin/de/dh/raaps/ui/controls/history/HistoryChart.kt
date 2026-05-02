@@ -1,4 +1,4 @@
-package de.dh.raaps.ui.screens.common
+package de.dh.raaps.ui.controls.history
 
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
@@ -8,6 +8,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.withSave
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.patrykandpatrick.vico.compose.cartesian.CartesianChartHost
 import com.patrykandpatrick.vico.compose.cartesian.CartesianDrawingContext
@@ -33,16 +34,24 @@ import com.patrykandpatrick.vico.compose.common.Fill
 import com.patrykandpatrick.vico.compose.common.Position
 import com.patrykandpatrick.vico.compose.common.component.rememberShapeComponent
 import com.patrykandpatrick.vico.compose.common.data.ExtraStore
+import de.dh.raaps.core.api.ID_UNDEFINED
 import de.dh.raaps.core.api.data.BgSampleKind
+import de.dh.raaps.core.api.data.BgValue
 import de.dh.raaps.core.api.data.Minutes
+import de.dh.raaps.core.api.data.SmoothedBgSample
+import de.dh.raaps.core.api.data.Tick
+import de.dh.raaps.core.api.data.Timestamp
 import de.dh.raaps.model.ApsTickState
 import de.dh.raaps.ui.composables.Blue200
 import de.dh.raaps.ui.composables.BlueA200
 import de.dh.raaps.ui.composables.OrangeA200
 import de.dh.raaps.ui.composables.Red400
 import de.dh.raaps.ui.composables.Yellow
+import de.dh.raaps.ui.theme.ApsTheme
 import java.util.Calendar
 import java.util.Locale
+import kotlin.math.sin
+import kotlin.random.Random
 
 private const val INITIAL_SHOW_HOURS = 4.0
 
@@ -231,4 +240,50 @@ fun BgHistoryChart(
             onClick = { onChartClick?.invoke() }
         ),
     )
+}
+
+fun generatedBg(size: Int, index: Int): SmoothedBgSample {
+    // Base curve: average 120, fluctuation of +/- 50 using overlapping sine waves
+    val base = 170.0
+    val curve = 100.0 * sin(index / (size / 120.0)) + 15.0 * sin(index / 12.0)
+    val noise = Random.nextDouble(-5.0, 5.0)
+
+    val bgValue = (base + curve + noise).toInt().coerceIn(40, 400)
+
+    return SmoothedBgSample(
+        BgValue.fromMgDl(bgValue),
+        BgValue.fromMgDl(bgValue),
+        BgSampleKind.Value,
+        Timestamp(index.toLong())
+    )
+}
+
+fun createSampleHistoryTicks(size: Int): List<ApsTickState> = List(size) { index ->
+    ApsTickState(
+        ID_UNDEFINED, Tick(index), generatedBg(size, index)
+    )
+}
+
+@Preview(showBackground = true)
+@Composable
+fun HistoryChart5Preview() {
+    val historyTicks = createSampleHistoryTicks(120)
+    ApsTheme {
+        BgHistoryChart(
+            tickStates = historyTicks,
+            tickInterval = Minutes(5)
+        )
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+fun HistoryChart1Preview() {
+    val historyTicks = createSampleHistoryTicks(600)
+    ApsTheme {
+        BgHistoryChart(
+            tickStates = historyTicks,
+            tickInterval = Minutes(1)
+        )
+    }
 }
