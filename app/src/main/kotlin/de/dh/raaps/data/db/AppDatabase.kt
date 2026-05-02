@@ -8,14 +8,17 @@ import androidx.room.Query
 import androidx.room.Room
 import androidx.room.RoomDatabase
 import androidx.room.TypeConverters
+import androidx.room.Upsert
+import de.dh.raaps.core.api.data.Tick
 import de.dh.raaps.data.db.entities.DataProviderEntity
 import de.dh.raaps.data.db.entities.GlucoseReadingEntity
 import de.dh.raaps.data.db.entities.SensorTypeEntity
 import de.dh.raaps.data.db.entities.TherapyDataEntity
+import de.dh.raaps.data.db.entities.TickStateEntity
 import java.util.concurrent.Executors
 
 @Dao
-interface ProvidersDao {
+interface ProviderDao {
     @Query("SELECT * FROM sensor_type ORDER BY name ASC")
     suspend fun getAllSensorTypes(): List<SensorTypeEntity>
 
@@ -41,6 +44,20 @@ interface ProvidersDao {
     suspend fun insertGlucoseReading(reading: GlucoseReadingEntity)
 }
 
+@Dao
+interface TherapyDao {
+
+}
+
+@Dao
+interface StateDao {
+    @Upsert
+    fun insertOrUpdateTickState(tickState: TickStateEntity)
+
+    @Query("SELECT * FROM tick_state WHERE tick >= :fromTick AND tick <= :toTick ORDER BY tick")
+    fun getTickStates(fromTick: Tick, toTick: Tick): List<TickStateEntity>
+}
+
 @Database(entities = [
     // Providers
     SensorTypeEntity::class,
@@ -48,13 +65,18 @@ interface ProvidersDao {
     GlucoseReadingEntity::class,
 
     // Therapy
-    TherapyDataEntity::class
+    TherapyDataEntity::class,
+
+    // States
+    TickStateEntity::class
 ], version = 1)
 @TypeConverters(
     DbTypeConverters::class
 )
 abstract class AppDatabase : RoomDatabase() {
-    abstract fun providersDao(): ProvidersDao
+    abstract fun providerDao(): ProviderDao
+    abstract fun therapyDao(): TherapyDao
+    abstract fun stateDao(): StateDao
 
     companion object {
         const val CURRENT_DATABASE_VERSION = "1.0"
@@ -87,4 +109,3 @@ abstract class AppDatabase : RoomDatabase() {
         }
     }
 }
-

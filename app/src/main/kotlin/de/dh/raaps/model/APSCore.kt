@@ -16,6 +16,13 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.map
 
+enum class APSCoreState {
+    Initializing,
+    Calculating,
+    Idle,
+    Uninitializing
+}
+
 /**
  * The computation core of the APS system.
  * This class is NOT thread-safe by itself and must be called from a controlled threading environment (like APS facade).
@@ -28,7 +35,7 @@ class APSCore(
     private val onDataUpdated: () -> Unit
 ) {
     // State
-    val rollingHistory: ApsRollingHistory = loadRollingHistory(dataRepository)
+    var rollingHistory: ApsRollingHistory = ApsRollingHistory(historyHours = 0, tickDuration = Minutes(5))
     var currentBg: SmoothedBgSample? = null
         private set
     var lastBg: SmoothedBgSample? = null
@@ -41,10 +48,20 @@ class APSCore(
      */
     var glucoseReadingsTimeDelay: Minutes = Minutes(0)
 
+    private val _coreState = MutableStateFlow(APSCoreState.Initializing)
+    val coreState: StateFlow<APSCoreState> = _coreState.asStateFlow()
+
     // Signal to the facade that the core is currently performing critical work. If the
     // busy state is bigger than 0, the core is working and needs a wake lock.
     private val _busyState = MutableStateFlow(0)
     val busyState: StateFlow<Int> = _busyState.asStateFlow()
+
+
+    suspend fun initialize() {
+        _coreState.emit(APSCoreState.Initializing)
+        rollingHistory = loadRollingHistory(dataRepository)
+        _coreState.emit(APSCoreState.Idle)
+    }
 
     /**
      * Installs the input Flow of BG values from the given plugin.
@@ -113,6 +130,7 @@ class APSCore(
             val lastAnchorTick = rollingHistory.anchorTick
             val tickState = rollingHistory.getApsTickState(tick, true) ?: return@busyWork
             tickState.bg = bg
+            dataRepository.insertOrUpdateTickState(tickState)
             if (tick != lastAnchorTick) {
                 recalculate()
             }
@@ -140,7 +158,7 @@ class APSCore(
         }
     }
 
-    private fun loadRollingHistory(dataRepository: DataRepository): ApsRollingHistory {
+    private suspend fun initializeRollingHistory(dataRepository: DataRepository): ApsRollingHistory {
         // TODO: Load from DB or initialize empty
         return ApsRollingHistory(historyHours = 10, tickDuration = Minutes(5))
     }

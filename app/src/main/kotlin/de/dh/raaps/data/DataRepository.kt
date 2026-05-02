@@ -5,17 +5,20 @@ import de.dh.raaps.core.api.ToDo
 import de.dh.raaps.core.api.data.BgReading
 import de.dh.raaps.core.api.data.SensorType
 import de.dh.raaps.core.api.data.TherapyData
+import de.dh.raaps.core.api.data.Tick
 import de.dh.raaps.core.api.data.Timestamp
 import de.dh.raaps.core.api.mock.mockSimpleTherapyData
 import de.dh.raaps.data.db.AppDatabase
 import de.dh.raaps.data.db.entities.DataProviderEntity
 import de.dh.raaps.data.db.entities.SensorTypeEntity
+import de.dh.raaps.data.db.toEntity
 import de.dh.raaps.data.db.toModel
 import de.dh.raaps.data.db.toNewEntity
+import de.dh.raaps.model.ApsTickState
 
 class DataRepository(val database: AppDatabase) {
     suspend fun getOrCreateSensorTypeByName(name: String): SensorType {
-        val dao = database.providersDao()
+        val dao = database.providerDao()
         var res = dao.getSensorTypeByName(name)
         if (res == null) {
             res = SensorTypeEntity(
@@ -27,7 +30,7 @@ class DataRepository(val database: AppDatabase) {
     }
 
     suspend fun getOrCreateDataProviderByName(name: String, type: String): DataProvider {
-        val dao = database.providersDao()
+        val dao = database.providerDao()
         var res = dao.getDataProviderByName(name)
         if (res == null) {
             res = DataProviderEntity(
@@ -43,7 +46,7 @@ class DataRepository(val database: AppDatabase) {
      * Insert the given glucose reading from a data provider to the database.
      */
     suspend fun insertDataProviderGlucoseReading(reading: BgReading, dataProvider: DataProvider, sourceSensor: SensorType) {
-        database.providersDao().insertGlucoseReading(reading.toNewEntity(dataProvider.id, sourceSensor.id))
+        database.providerDao().insertGlucoseReading(reading.toNewEntity(dataProvider.id, sourceSensor.id))
     }
 
     /**
@@ -53,5 +56,12 @@ class DataRepository(val database: AppDatabase) {
         ToDo.toBeImplemented("Calculate/get therapy data for given timestamp")
         return mockSimpleTherapyData()
     }
-}
 
+    fun insertOrUpdateTickState(tickState: ApsTickState) {
+        database.stateDao().insertOrUpdateTickState(tickState.toEntity())
+    }
+
+    fun getTickStates(fromTick: Tick, toTick: Tick): List<ApsTickState> {
+        return database.stateDao().getTickStates(fromTick, toTick).toModel()
+    }
+}

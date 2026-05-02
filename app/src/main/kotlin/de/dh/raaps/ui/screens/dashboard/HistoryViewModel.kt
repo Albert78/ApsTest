@@ -7,6 +7,7 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.CreationExtras
 import de.dh.raaps.MainApplication
+import de.dh.raaps.model.APS
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
@@ -23,11 +24,16 @@ class HistoryViewModel(
     private val _uiState = MutableStateFlow(HistoryUiState(isLoading = true, isError = false))
     val uiState = _uiState.asStateFlow()
 
+    private val aps: APS = application.aps
     private val dataRepository = application.dataRepository
 
     init {
         viewModelScope.launch {
+            // TODO: Listen to APS state, if APS finished initializing, do the reload
             reload_suspend()
+            aps.lastDataTime.collect {
+                updateHistory(aps.rollingHistory.getSnapshot())
+            }
         }
     }
 

@@ -1,11 +1,15 @@
 package de.dh.raaps.model
 
+import de.dh.raaps.core.api.ID_UNDEFINED
 import de.dh.raaps.core.api.data.SmoothedBgSample
+import de.dh.raaps.core.api.data.Tick
 
 /**
  * Contains the APS data contained at a discrete time tick in the APS rolling history window.
  */
 data class ApsTickState(
+    var id: Long,
+    val tick: Tick,
     var bg: SmoothedBgSample? = null,
 
     // TODO: All needed fields for APS calculations
@@ -14,7 +18,6 @@ data class ApsTickState(
     var prediction: Double? = null
 ) {
     companion object {
-        fun empty() = ApsTickState()
+        fun empty(tick: Tick) = ApsTickState(id = ID_UNDEFINED, tick = tick)
     }
 }
-

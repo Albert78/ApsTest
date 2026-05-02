@@ -32,7 +32,7 @@ class ApsRollingHistory(
     fun advanceTo(newAnchorTick: Tick) {
         if (anchorTick == Tick.invalid()) {
             anchorTick = newAnchorTick
-            buffer[bufferIndex(newAnchorTick)] = ApsTickState.empty()
+            buffer[bufferIndex(newAnchorTick)] = ApsTickState.empty(newAnchorTick)
             return
         }
 
@@ -40,7 +40,8 @@ class ApsRollingHistory(
             // Clear the slots that have become "stale" due to time advancing
             val ticksToClear = (newAnchorTick.value - anchorTick.value).coerceAtMost(capacity)
             for (i in 1..ticksToClear) {
-                buffer[bufferIndex(Tick(anchorTick.value + i))] = ApsTickState.empty()
+                val tick = Tick(anchorTick.value + i)
+                buffer[bufferIndex(tick)] = ApsTickState.empty(tick)
                 // TODO: Write ApsState to database
             }
             anchorTick = newAnchorTick
