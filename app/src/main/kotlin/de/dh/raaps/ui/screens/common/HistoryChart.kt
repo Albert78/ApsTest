@@ -7,6 +7,8 @@ import androidx.compose.ui.Modifier
 import com.patrykandpatrick.vico.compose.cartesian.CartesianChartHost
 import com.patrykandpatrick.vico.compose.cartesian.CartesianDrawingContext
 import com.patrykandpatrick.vico.compose.cartesian.CartesianMeasuringContext
+import com.patrykandpatrick.vico.compose.cartesian.Scroll
+import com.patrykandpatrick.vico.compose.cartesian.Zoom
 import com.patrykandpatrick.vico.compose.cartesian.axis.Axis
 import com.patrykandpatrick.vico.compose.cartesian.axis.HorizontalAxis
 import com.patrykandpatrick.vico.compose.cartesian.axis.VerticalAxis
@@ -16,12 +18,16 @@ import com.patrykandpatrick.vico.compose.cartesian.data.CartesianValueFormatter
 import com.patrykandpatrick.vico.compose.cartesian.data.lineSeries
 import com.patrykandpatrick.vico.compose.cartesian.layer.rememberLineCartesianLayer
 import com.patrykandpatrick.vico.compose.cartesian.rememberCartesianChart
+import com.patrykandpatrick.vico.compose.cartesian.rememberVicoScrollState
+import com.patrykandpatrick.vico.compose.cartesian.rememberVicoZoomState
 import com.patrykandpatrick.vico.compose.common.Position
 import com.patrykandpatrick.vico.compose.common.data.ExtraStore
 import de.dh.raaps.core.api.data.Minutes
 import de.dh.raaps.model.ApsTickState
 import java.util.Calendar
 import java.util.Locale
+
+private const val INITIAL_SHOW_HOURS = 4.0
 
 @Composable
 fun BgHistoryChart(
@@ -63,32 +69,43 @@ fun BgHistoryChart(
     val rangeProvider = remember {
         object : CartesianLayerRangeProvider {
             override fun getMinY(minY: Double, maxY: Double, extraStore: ExtraStore) = 40.0
-            override fun getMaxY(minY: Double, maxY: Double, extraStore: ExtraStore) = 250.0
+            override fun getMaxY(minY: Double, maxY: Double, extraStore: ExtraStore): Double {
+                val baseMax = maxY.coerceAtLeast(200.0) + 10.0
+                return baseMax.coerceAtMost(410.0)
+            }
         }
     }
 
     val yAxisItemPlacer = remember {
         object : VerticalAxis.ItemPlacer {
-            private val labelValues = listOf(50.0, 100.0, 150.0, 200.0, 250.0)
-
             override fun getLabelValues(
                 context: CartesianDrawingContext,
                 axisHeight: Float,
                 maxLabelHeight: Float,
                 position: Axis.Position.Vertical,
-            ): List<Double> = labelValues
+            ): List<Double> = getValues(context.ranges.getYRange(position).maxY)
 
             override fun getWidthMeasurementLabelValues(
                 context: CartesianMeasuringContext,
                 axisHeight: Float,
                 maxLabelHeight: Float,
                 position: Axis.Position.Vertical,
-            ): List<Double> = labelValues
+            ): List<Double> = getValues(context.ranges.getYRange(position).maxY)
 
             override fun getHeightMeasurementLabelValues(
                 context: CartesianMeasuringContext,
                 position: Axis.Position.Vertical,
-            ): List<Double> = labelValues
+            ): List<Double> = getValues(context.ranges.getYRange(position).maxY)
+
+            private fun getValues(maxY: Double): List<Double> {
+                val values = mutableListOf<Double>()
+                var current = 50.0
+                while (current <= maxY) {
+                    values.add(current)
+                    current += 50.0
+                }
+                return values
+            }
 
             override fun getTopLayerMargin(
                 context: CartesianMeasuringContext,
@@ -106,6 +123,11 @@ fun BgHistoryChart(
         }
     }
 
+    val scrollState = rememberVicoScrollState(initialScroll = Scroll.Absolute.End)
+    val zoomState = rememberVicoZoomState(
+        initialZoom = Zoom.x(INITIAL_SHOW_HOURS * 60.0 / tickInterval.value.toDouble())
+    )
+
     CartesianChartHost(
         chart = rememberCartesianChart(
             rememberLineCartesianLayer(rangeProvider = rangeProvider),
@@ -116,6 +138,8 @@ fun BgHistoryChart(
             ),
         ),
         modelProducer = modelProducer,
+        scrollState = scrollState,
+        zoomState = zoomState,
         modifier = modifier,
     )
 }
