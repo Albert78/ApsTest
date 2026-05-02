@@ -37,9 +37,9 @@ class ApsNotificationManager(
     fun getBgValueString(sample: BgValue?, forceSign: Boolean): String? {
         if (sample == null) return null
         return if (forceSign) {
-            String.format(Locale.getDefault(), "%+d mg/dl", sample.mgdl)
+            String.format(Locale.getDefault(), "%+d", sample.mgdl)
         } else {
-            "${sample.mgdl} mg/dl"
+            "${sample.mgdl}"
         }
     }
 
@@ -53,7 +53,7 @@ class ApsNotificationManager(
             var ret = bgValueStr
             val bgDeltaStr = getBgValueString(data.getBgDelta(), true)
             if (bgDeltaStr != null) {
-                ret = "$ret, Δ$bgDeltaStr"
+                ret = "$ret, Δ$bgDeltaStr mg/dl"
             }
             ret
         }

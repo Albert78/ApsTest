@@ -76,7 +76,8 @@ dependencies {
     ksp(libs.androidx.room.compiler)
 
     // Graph
-    implementation(libs.com.patrykandpatrick.vico.compose)
+    implementation(libs.vico.compose)
+    implementation(libs.vico.compose.m3)
 
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)

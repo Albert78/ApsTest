@@ -4,7 +4,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.unit.dp
 import com.patrykandpatrick.vico.compose.cartesian.CartesianChartHost
 import com.patrykandpatrick.vico.compose.cartesian.axis.HorizontalAxis
 import com.patrykandpatrick.vico.compose.cartesian.axis.VerticalAxis
@@ -12,10 +11,7 @@ import com.patrykandpatrick.vico.compose.cartesian.data.CartesianChartModelProdu
 import com.patrykandpatrick.vico.compose.cartesian.data.lineSeries
 import com.patrykandpatrick.vico.compose.cartesian.layer.rememberLineCartesianLayer
 import com.patrykandpatrick.vico.compose.cartesian.rememberCartesianChart
-import de.dh.raaps.ui.composables.Blue200
-import de.dh.raaps.ui.composables.BlueA200
-import de.dh.raaps.ui.composables.Orange600
-import de.dh.raaps.ui.composables.Red400
+import de.dh.raaps.model.ApsTickState
 
 @Composable
 private fun BasicLineChart(
@@ -35,7 +31,10 @@ private fun BasicLineChart(
 }
 
 @Composable
-fun BgHistoryChart(modifier: Modifier = Modifier) {
+fun BgHistoryChart(
+    tickStates: List<ApsTickState?>,
+    modifier: Modifier = Modifier
+) {
     val modelProducer = remember { CartesianChartModelProducer() }
 
 //    val glucoseSeries = LineSeries(

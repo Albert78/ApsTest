@@ -32,11 +32,19 @@ import androidx.compose.ui.unit.dp
 import de.dh.eventseries.ui.composables.WarningBanner
 import de.dh.eventseries.ui.composables.screenTitle
 import de.dh.raaps.R
+import de.dh.raaps.core.api.ID_UNDEFINED
+import de.dh.raaps.core.api.data.BgSampleKind
+import de.dh.raaps.core.api.data.BgValue
+import de.dh.raaps.core.api.data.SmoothedBgSample
+import de.dh.raaps.core.api.data.Tick
+import de.dh.raaps.core.api.data.Timestamp
+import de.dh.raaps.model.ApsTickState
 import de.dh.raaps.ui.screens.common.BgHistoryChart
 import de.dh.raaps.ui.screens.permissions.PermissionStatus
 import de.dh.raaps.ui.screens.permissions.PermissionsUiModel
 import de.dh.raaps.ui.screens.permissions.PermissionsViewModel
 import de.dh.raaps.ui.theme.ApsTheme
+import kotlin.random.Random
 
 @Composable
 fun DashboardScreen(
@@ -146,8 +154,7 @@ fun DashboardContent(
                         style = MaterialTheme.typography.bodyLarge
                     )
 
-                    BgHistoryChart(
-                    )
+                    BgHistoryChart(historyUiState.historyTicks)
                 }
             }
         }
@@ -155,7 +162,24 @@ fun DashboardContent(
 }
 
 fun createSampleHistoryUiState(): HistoryUiState {
-    return HistoryUiState(isLoading = false, isError = false)
+    fun randomBg(index: Int): SmoothedBgSample {
+        val bg = 50 + Random.nextInt(100)
+        return SmoothedBgSample(
+            BgValue.fromMgDl(bg),
+            BgValue.fromMgDl(bg + 10),
+            BgSampleKind.Value,
+            Timestamp(index.toLong())
+        )
+    }
+    return HistoryUiState(
+        isLoading = false,
+        isError = false,
+        historyTicks = List(600, { index ->
+            ApsTickState(
+                ID_UNDEFINED, Tick(index), randomBg(index)
+            )
+        } )
+    )
 }
 
 @Preview(showBackground = true)

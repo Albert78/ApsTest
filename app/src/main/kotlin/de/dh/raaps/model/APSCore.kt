@@ -81,8 +81,10 @@ class APSCore(
 
     suspend fun initialize() {
         atomicOperationLock.withLock {
+            Log.d(TAG, "Initializing...")
             setCoreState(APSCoreState.Initializing)
             rollingHistory = initializeRollingHistory(dataRepository)
+            Log.d(TAG, "Finished initialization...")
             setCoreState(APSCoreState.Idle)
         }
     }
@@ -142,6 +144,8 @@ class APSCore(
             .collect { bg ->
                 updateBg(bg)
             }
+
+        Log.d(TAG, "Installed glucose pipeline")
     }
 
     /**
@@ -150,7 +154,7 @@ class APSCore(
      */
     suspend fun updateBg(bg: SmoothedBgSample) {
         busyWork {
-            Log.d(TAG, "Got new BG in APS Core: $bg")
+            Log.d(TAG, "Got new BG: $bg")
             lastBg = currentBg
             currentBg = bg
             val tick = rollingHistory.tick(bg.timestamp)

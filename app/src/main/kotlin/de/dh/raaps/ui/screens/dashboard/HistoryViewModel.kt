@@ -10,6 +10,7 @@ import de.dh.raaps.MainApplication
 import de.dh.raaps.model.APS
 import de.dh.raaps.model.APSCoreState
 import de.dh.raaps.model.ApsHistorySnapshot
+import de.dh.raaps.model.ApsTickState
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.first
@@ -19,6 +20,7 @@ import kotlinx.coroutines.launch
 data class HistoryUiState(
     val isLoading: Boolean,
     val isError: Boolean,
+    val historyTicks: List<ApsTickState?> = listOf()
 )
 
 class HistoryViewModel(
@@ -54,18 +56,19 @@ class HistoryViewModel(
     private fun updateUiModel(apsHistory: ApsHistorySnapshot) {
         val res = application.resources
 
-        // TODO: Prepare data
-
         _uiState.update {
             HistoryUiState(
                 isLoading = false,
                 isError = false,
+                historyTicks = apsHistory.ticks
             )
         }
     }
 
 
     companion object {
+        val TAG = HistoryViewModel::class.simpleName
+
         class Factory(
             private val application: Application,
         ) : ViewModelProvider.Factory {
