@@ -18,6 +18,7 @@ import com.patrykandpatrick.vico.compose.cartesian.Zoom
 import com.patrykandpatrick.vico.compose.cartesian.axis.Axis
 import com.patrykandpatrick.vico.compose.cartesian.axis.HorizontalAxis
 import com.patrykandpatrick.vico.compose.cartesian.axis.VerticalAxis
+import com.patrykandpatrick.vico.compose.cartesian.axis.rememberAxisLabelComponent
 import com.patrykandpatrick.vico.compose.cartesian.data.CartesianChartModelProducer
 import com.patrykandpatrick.vico.compose.cartesian.data.CartesianLayerRangeProvider
 import com.patrykandpatrick.vico.compose.cartesian.data.CartesianValueFormatter
@@ -27,6 +28,8 @@ import com.patrykandpatrick.vico.compose.cartesian.decoration.HorizontalBox
 import com.patrykandpatrick.vico.compose.cartesian.layer.LineCartesianLayer
 import com.patrykandpatrick.vico.compose.cartesian.layer.rememberLine
 import com.patrykandpatrick.vico.compose.cartesian.layer.rememberLineCartesianLayer
+import com.patrykandpatrick.vico.compose.cartesian.marker.DefaultCartesianMarker
+import com.patrykandpatrick.vico.compose.cartesian.marker.rememberDefaultCartesianMarker
 import com.patrykandpatrick.vico.compose.cartesian.rememberCartesianChart
 import com.patrykandpatrick.vico.compose.cartesian.rememberVicoScrollState
 import com.patrykandpatrick.vico.compose.cartesian.rememberVicoZoomState
@@ -62,6 +65,7 @@ fun BgHistoryChart(
     modifier: Modifier = Modifier,
     lowBgThreshold: Double = 70.0,
     highBgThreshold: Double = 170.0,
+    showMarkers: Boolean = false,
     onChartClick: (() -> Unit)? = null
 ) {
     val modelProducer = remember { CartesianChartModelProducer() }
@@ -166,6 +170,31 @@ fun BgHistoryChart(
         initialZoom = Zoom.x(INITIAL_SHOW_HOURS * 60.0 / tickInterval.value.toDouble())
     )
 
+    val markerValueFormatter = remember(tickStates, tickInterval) {
+        DefaultCartesianMarker.ValueFormatter { _, targets ->
+            val x = targets.firstOrNull()?.x ?: return@ValueFormatter ""
+            val state = tickStates.getOrNull(x.toInt()) ?: return@ValueFormatter ""
+
+            val calendar = Calendar.getInstance().apply {
+                timeInMillis = state.tick.value.toLong() * tickInterval.value.toLong() * 60_000L
+            }
+            val timeStr = String.format(
+                Locale.getDefault(),
+                "%02d:%02d",
+                calendar.get(Calendar.HOUR_OF_DAY),
+                calendar.get(Calendar.MINUTE)
+            )
+            val bgValue = state.bg?.smoothedValue?.mgdl?.toInt() ?: 0
+
+            "$timeStr | $bgValue mg/dL"
+        }
+    }
+
+    val marker = if (showMarkers) rememberDefaultCartesianMarker(
+        label = rememberAxisLabelComponent(),
+        valueFormatter = markerValueFormatter
+    ) else null
+
     val lowBgBox = rememberShapeComponent(fill = Fill(Red400.copy(alpha = 0.2f)))
     val highBgBox = rememberShapeComponent(fill = Fill(OrangeA200.copy(alpha = 0.2f)))
 
@@ -228,6 +257,7 @@ fun BgHistoryChart(
                 valueFormatter = xAxisValueFormatter,
                 itemPlacer = xItemPlacer
             ),
+            marker = marker,
             decorations = decorations,
         ),
         modelProducer = modelProducer,

@@ -34,14 +34,14 @@ fun HistoryScreen(
 ) {
     val historyUiState by historyViewModel.historyUiState.collectAsState()
 
-    DashboardContent(
+    HistoryContent(
         historyUiState = historyUiState
     )
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun DashboardContent(
+fun HistoryContent(
     historyUiState: HistoryUiState
 ) {
     val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior()
@@ -69,6 +69,7 @@ fun DashboardContent(
                 BgHistoryChart(
                     historyUiState.historyTicks,
                     historyUiState.tickInterval,
+                    showMarkers = true,
                     modifier = Modifier.fillMaxSize()
                 )
             }
@@ -89,7 +90,7 @@ fun createSampleHistoryUiState(): HistoryUiState {
 @Composable
 fun HistoryScreenPreview() {
     ApsTheme {
-        DashboardContent(
+        HistoryContent(
             historyUiState = createSampleHistoryUiState()
         )
     }
