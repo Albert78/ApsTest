@@ -47,8 +47,8 @@ import de.dh.raaps.core.api.data.Timestamp
 import de.dh.raaps.model.ApsTickState
 import de.dh.raaps.ui.composables.Blue200
 import de.dh.raaps.ui.composables.BlueA200
-import de.dh.raaps.ui.composables.OrangeA200
-import de.dh.raaps.ui.composables.Red400
+import de.dh.raaps.ui.composables.DeepOrangeA700
+import de.dh.raaps.ui.composables.RedA700
 import de.dh.raaps.ui.composables.Yellow
 import de.dh.raaps.ui.theme.ApsTheme
 import java.util.Calendar
@@ -195,8 +195,8 @@ fun BgHistoryChart(
         valueFormatter = markerValueFormatter
     ) else null
 
-    val lowBgBox = rememberShapeComponent(fill = Fill(Red400.copy(alpha = 0.2f)))
-    val highBgBox = rememberShapeComponent(fill = Fill(OrangeA200.copy(alpha = 0.2f)))
+    val lowBgBox = rememberShapeComponent(fill = Fill(RedA700.copy(alpha = 0.2f)))
+    val highBgBox = rememberShapeComponent(fill = Fill(DeepOrangeA700.copy(alpha = 0.3f)))
 
     val decorations = remember(lowBgThreshold, highBgThreshold, lowBgBox, highBgBox) {
         listOf(
