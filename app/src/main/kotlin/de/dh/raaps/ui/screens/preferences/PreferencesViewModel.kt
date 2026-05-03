@@ -1,10 +1,12 @@
 package de.dh.raaps.ui.screens.preferences
 
+import androidx.datastore.preferences.core.Preferences
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import de.dh.raaps.AppStateRepository
 import de.dh.raaps.MainApplication
+import de.dh.raaps.ui.common.THEME_SYSTEM_MODE
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -17,6 +19,7 @@ import kotlinx.coroutines.launch
 data class PreferencesUiState(
     val isLoading: Boolean,
     val isError: Boolean,
+    val themeMode: String = THEME_SYSTEM_MODE
 )
 
 class PreferencesViewModel(
@@ -34,22 +37,23 @@ class PreferencesViewModel(
         viewModelScope.launch {
             try {
                 appStateRepository.cachedPreferences.collect {
-                    preferences -> updateUiModel(/*preferences.themeMode, preferences.calendarSyncMode*/)
+                    preferences -> updateUiModel(preferences)
                 }
             } catch (_: Exception) {
-                updateUiModel()
+                updateUiModel(null)
             }
         }
     }
 
-    private fun updateUiModel(/*themeMode: ThemeMode?, calendarSyncEventsMode: CalendarSyncMode?*/) {
-//        if (themeMode == null || calendarSyncEventsMode == null) {
-//            _uiState.update { PreferencesUiState(isLoading = true, isError = false) }
-//            return
-//        }
+    private fun updateUiModel(preferences: Preferences?) {
+        if (preferences == null) {
+            _uiState.update { PreferencesUiState(isLoading = true, isError = false) }
+            return
+        }
         _uiState.update { PreferencesUiState(
             isLoading = false,
             isError = false,
+            // TODO: Theme mode
         ) }
     }
 

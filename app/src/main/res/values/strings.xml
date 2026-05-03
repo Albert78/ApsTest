@@ -55,6 +55,22 @@
     <string name="permissions_needed_fix_action">Reparieren</string>
 
     <string name="preferences_screen_title">Einstellungen</string>
+    <string name="pref_category_appearance_title">Benutzeroberfläche</string>
+    <string name="pref_theme_title">Design</string>
+    <string name="pref_theme_dialog_title">Design wählen</string>
+
+    <string-array name="pref_theme_values">
+        <item>system</item>
+        <item>light</item>
+        <item>dark</item>
+    </string-array>
+
+    <!-- Preferences entries for theme mode shown to the user. Corresponds to pref_theme_values. -->
+    <string-array name="pref_theme_entries">
+        <item>Systemstandard</item>
+        <item>Hell</item>
+        <item>Dunkel</item>
+    </string-array>
 
     <string name="aps_service_notification_channel_name">RAAPS Service</string>
     <string name="aps_service_notification_content_no_value_yet">Kein Glukosewert</string>

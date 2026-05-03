@@ -12,6 +12,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ChevronRight
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.LargeTopAppBar
@@ -29,9 +30,9 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import de.dh.raaps.R
+import de.dh.raaps.ui.composables.screenTitle
 import de.dh.raaps.ui.screens.common.Icon_Screen_Back
 import de.dh.raaps.ui.theme.ApsTheme
-import de.dh.raaps.ui.composables.screenTitle
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -77,8 +78,8 @@ fun PreferencesContent(
                 .fillMaxSize()
                 .padding(innerPadding)
         ) {
-//            PreferenceCategory(title = stringResource(R.string.pref_category_appearance_title))
-//
+            PreferenceCategory(title = stringResource(R.string.pref_category_appearance_title))
+
 //            // Map the internal value to a display label
 //            val currentThemeLabel = stringResource(uiState.themeMode.labelResId)
 //
@@ -88,8 +89,8 @@ fun PreferencesContent(
 //                icon = Icons.Default.Palette,
 //                onClick = { showThemeDialog = true }
 //            )
-//
-//            HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
+
+            HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
         }
     }
 }
