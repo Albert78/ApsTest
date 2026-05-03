@@ -19,11 +19,15 @@ value class BgValue(val mgdl: Short) {
             GlucoseUnit.MMOL -> String.format(Locale.getDefault(), "%.1f", mmol)
         }
 
-    fun toDiff(glucoseUnit: GlucoseUnit) =
-        when (glucoseUnit) {
+    fun toDiff(glucoseUnit: GlucoseUnit): String {
+        if (mgdl == 0.toShort()) {
+            return "\u00B10"
+        }
+        return when (glucoseUnit) {
             GlucoseUnit.MG_DL -> String.format(Locale.getDefault(), "%+d", mgdl)
             GlucoseUnit.MMOL -> String.format(Locale.getDefault(), "%+.1f", mmol)
         }
+    }
 
     companion object {
         fun fromMgDl(value: Short): BgValue {
