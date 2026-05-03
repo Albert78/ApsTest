@@ -71,22 +71,24 @@ fun BgHistoryChart(
     val modelProducer = remember { CartesianChartModelProducer() }
 
     LaunchedEffect(tickStates) {
-        modelProducer.runTransaction {
-            lineSeries {
-                val validIndices = tickStates.indices.filter {
-                    val bg = tickStates[it]?.bg ?: return@filter false
-                    return@filter bg.sampleKind != BgSampleKind.Invalid
+        val validIndices = tickStates.indices.filter {
+            val bg = tickStates[it]?.bg ?: return@filter false
+            return@filter bg.sampleKind != BgSampleKind.Invalid
+        }
+        if (validIndices.isNotEmpty()) {
+            modelProducer.runTransaction {
+                lineSeries {
+                    // Series 1: Smoothed values (smoothedValue) - Drawn first (under)
+                    series(
+                        x = validIndices.toList(),
+                        y = validIndices.map { tickStates[it]!!.bg!!.smoothedValue.mgdl.toFloat() }
+                    )
+                    // Series 2: Raw values (origValue) - Drawn second (over)
+                    series(
+                        x = validIndices.toList(),
+                        y = validIndices.map { tickStates[it]!!.bg!!.origValue.mgdl.toFloat() }
+                    )
                 }
-                // Series 1: Smoothed values (smoothedValue) - Drawn first (under)
-                series(
-                    x = validIndices.toList(),
-                    y = validIndices.map { tickStates[it]!!.bg!!.smoothedValue.mgdl.toFloat() }
-                )
-                // Series 2: Raw values (origValue) - Drawn second (over)
-                series(
-                    x = validIndices.toList(),
-                    y = validIndices.map { tickStates[it]!!.bg!!.origValue.mgdl.toFloat() }
-                )
             }
         }
     }

@@ -201,6 +201,15 @@ class APSCore(
         Log.d(TAG, "Installed glucose pipeline")
     }
 
+    private suspend fun initializeRollingHistory(dataRepository: DataRepository): ApsRollingHistory {
+        val result = ApsRollingHistory(historyHours = 10, tickDuration = Minutes(5))
+        val anchorTick = result.getNowTick()
+        result.advanceTo(anchorTick)
+        val tickStates = dataRepository.getTickStates(result.getFirstTick(), anchorTick)
+        result.replaceBufferTickStates(tickStates)
+        return result
+    }
+
     /**
      * Processes a new glucose reading. This can also be called from outside to provide an additional
      * bg value, e.g. from a bloody measure.
@@ -217,6 +226,7 @@ class APSCore(
                 tickState.bg = bg
                 dataRepository.insertOrUpdateTickState(tickState)
                 if (tick != lastAnchorTick) {
+                    // TODO: Only start a recalculation if new BG value differs too much from predicted value
                     recalculate()
                 }
                 onDataUpdated()
@@ -229,15 +239,6 @@ class APSCore(
      */
     fun recalculate() {
         // TODO: Implement therapy algorithm (IOB, COB, Prediction, Temp Basal)
-    }
-
-    private suspend fun initializeRollingHistory(dataRepository: DataRepository): ApsRollingHistory {
-        val result = ApsRollingHistory(historyHours = 10, tickDuration = Minutes(5))
-        val anchorTick = result.getNowTick()
-        result.advanceTo(anchorTick)
-        val tickStates = dataRepository.getTickStates(result.getFirstTick(), anchorTick)
-        result.replaceBufferTickStates(tickStates)
-        return result
     }
 
     companion object {
