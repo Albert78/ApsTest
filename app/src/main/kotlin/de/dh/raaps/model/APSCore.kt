@@ -17,17 +17,43 @@ import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 
 enum class APSCoreState {
-    Plain,
+    /**
+     * The APS core was created but not initialized yet. No data have been loaded from the DB
+     * and the calculation modules have not been connected yet.
+     */
+    Uninitialized,
+
+    /**
+     * The APS core is being initialized. During this time, the data is not reliable yet.
+     */
     Initializing,
-    Calculating,
+
+    /**
+     * The APS core data is valid and can be used.
+     */
     Idle,
-    Uninitializing
+
+    /**
+     * The APS core is currently calculating a new state. All data is valid in the meantime.
+     */
+    Calculating,
+
+    /**
+     * The system is being shut down. No more calculation will take place anymore.
+     */
+    Shutdown,
+
+    /**
+     * The system is in an unrecoverable error. This is a fatal situation and should
+     * hopefully not happen.
+     */
+    Error
 }
 
 /**
  * The computation core of the APS system.
  * This class is NOT thread-safe by itself and must be called from a controlled threading environment (like APS facade).
- * This class should remain (almost) free of workarounds for the Android system.
+ * This class should remain as free as possible of workarounds for the Android system.
  * We only need to signal the internal calculation state by setting the [busyState] flag. The surrounding app
  * is responsible for acquiring a wake lock.
  */
@@ -45,7 +71,7 @@ class APSCore(
     var lastBg: SmoothedBgSample? = null
         private set
 
-    var coreState: APSCoreState = APSCoreState.Plain
+    var coreState: APSCoreState = APSCoreState.Uninitialized
         private set
 
     /**
@@ -75,13 +101,23 @@ class APSCore(
         }
     }
 
+    /**
+     * Executes the given block atomically, e.g. blocks our (single) thread from being reused
+     * for other functions in case our block suspends.
+     */
+    private suspend fun <T> atomic(block: suspend () -> T): T {
+        return atomicOperationLock.withLock {
+            block()
+        }
+    }
+
     private fun setCoreState(state: APSCoreState) {
         coreState = state
         onCoreStateChanged()
     }
 
     suspend fun initialize() {
-        atomicOperationLock.withLock {
+        atomic {
             Log.d(TAG, "Initializing...")
             setCoreState(APSCoreState.Initializing)
             rollingHistory = initializeRollingHistory(dataRepository)
@@ -156,8 +192,8 @@ class APSCore(
         // Collect for core calculation
         smoothedValues
             // Threading notice:
-            // Since we're in a coroutine, this collect call won't block our (single) thread; instead,
-            // it will just suspend and free the thread for other work.
+            // Since we're in a coroutine, this collect call won't block our (single) thread while
+            // waiting for new values; instead, it will just suspend and free the thread for other work.
             .collect { bg ->
                 updateBg(bg)
             }
@@ -171,18 +207,20 @@ class APSCore(
      */
     suspend fun updateBg(bg: SmoothedBgSample) {
         busyWork {
-            Log.d(TAG, "Got new BG: $bg")
-            lastBg = currentBg
-            currentBg = bg
-            val tick = rollingHistory.tick(bg.timestamp)
-            val lastAnchorTick = rollingHistory.anchorTick
-            val tickState = rollingHistory.getApsTickState(tick, true) ?: return@busyWork
-            tickState.bg = bg
-            dataRepository.insertOrUpdateTickState(tickState)
-            if (tick != lastAnchorTick) {
-                recalculate()
+            atomic {
+                Log.d(TAG, "Got new BG: $bg")
+                lastBg = currentBg
+                currentBg = bg
+                val tick = rollingHistory.tick(bg.timestamp)
+                val lastAnchorTick = rollingHistory.anchorTick
+                val tickState = rollingHistory.getApsTickState(tick, true) ?: return@atomic
+                tickState.bg = bg
+                dataRepository.insertOrUpdateTickState(tickState)
+                if (tick != lastAnchorTick) {
+                    recalculate()
+                }
+                onDataUpdated()
             }
-            onDataUpdated()
         }
     }
 

@@ -21,7 +21,7 @@ value class BgValue(val mgdl: Short) {
 
     fun toDiff(glucoseUnit: GlucoseUnit): String {
         if (mgdl == 0.toShort()) {
-            return "\u00B10"
+            return "\u00B10" // Plus/minus 0
         }
         return when (glucoseUnit) {
             GlucoseUnit.MG_DL -> String.format(Locale.getDefault(), "%+d", mgdl)

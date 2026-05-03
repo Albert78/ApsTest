@@ -17,8 +17,6 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.sync.Mutex
-import kotlinx.coroutines.sync.withLock
 import java.util.concurrent.Executors
 import java.util.concurrent.atomic.AtomicInteger
 
@@ -34,8 +32,6 @@ class APS(
     // Threading: Single background thread to avoid race conditions in the core logic
     private val apsDispatcher = Executors.newSingleThreadExecutor().asCoroutineDispatcher()
     private val apsScope = CoroutineScope(apsDispatcher + SupervisorJob())
-
-    private val atomicOperationLock = Mutex()
 
     private val recursiveBusyState: AtomicInteger = AtomicInteger(0)
 
@@ -89,15 +85,6 @@ class APS(
     val coreState: StateFlow<APSCoreState> = _coreState.asStateFlow()
 
     /**
-     * Executes the given block atomically.
-     */
-    private suspend fun <T> atomic(block: suspend () -> T): T {
-        return atomicOperationLock.withLock {
-            block()
-        }
-    }
-
-    /**
      * Executes the given block on the internal APS thread.
      */
     private fun inAPSThread(block: suspend CoroutineScope.() -> Unit): Job {
@@ -122,9 +109,7 @@ class APS(
      */
     fun startInitialization() {
         inAPSThread {
-            atomic {
-                core.initialize()
-            }
+            core.initialize()
         }
         restartGlucosePipeline()
     }
@@ -178,9 +163,7 @@ class APS(
      * Guaranteed to run on the internal APS thread.
      */
     fun updateBg(bg: SmoothedBgSample) = inAPSThread {
-        atomic {
-            core.updateBg(bg)
-        }
+        core.updateBg(bg)
     }
 
     /**
