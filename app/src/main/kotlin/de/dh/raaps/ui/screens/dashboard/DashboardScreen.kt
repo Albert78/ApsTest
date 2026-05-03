@@ -35,8 +35,10 @@ import de.dh.raaps.R
 import de.dh.raaps.ui.composables.WarningBanner
 import de.dh.raaps.ui.composables.screenTitle
 import de.dh.raaps.ui.controls.history.BgHistoryChart
+import de.dh.raaps.ui.controls.history.BgHistoryChartOrDefault
 import de.dh.raaps.ui.controls.history.CurrentBgUiState
 import de.dh.raaps.ui.controls.history.CurrentBgView
+import de.dh.raaps.ui.controls.history.DiagramData
 import de.dh.raaps.ui.controls.history.HistoryUiState
 import de.dh.raaps.ui.controls.history.HistoryViewModel
 import de.dh.raaps.ui.controls.history.createSampleGoodBgUiState
@@ -170,9 +172,11 @@ fun DashboardContent(
                             modifier = Modifier.align(Alignment.Center)
                         )
                     } else {
-                        BgHistoryChart(
-                            historyUiState.historyTicks,
-                            historyUiState.tickInterval,
+                        BgHistoryChartOrDefault(
+                            diagramData = DiagramData.fromTickStates(
+                                historyUiState.historyTicks,
+                                historyUiState.tickInterval
+                            ),
                             onChartClick = onHistoryChartClick
                         )
                     }

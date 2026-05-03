@@ -22,7 +22,8 @@ import androidx.compose.ui.tooling.preview.Preview
 import de.dh.raaps.R
 import de.dh.raaps.core.api.data.Minutes
 import de.dh.raaps.ui.composables.screenTitle
-import de.dh.raaps.ui.controls.history.BgHistoryChart
+import de.dh.raaps.ui.controls.history.BgHistoryChartOrDefault
+import de.dh.raaps.ui.controls.history.DiagramData
 import de.dh.raaps.ui.controls.history.HistoryUiState
 import de.dh.raaps.ui.controls.history.HistoryViewModel
 import de.dh.raaps.ui.controls.history.createSampleHistoryTicks
@@ -66,9 +67,8 @@ fun HistoryContent(
                     modifier = Modifier.align(Alignment.Center)
                 )
             } else {
-                BgHistoryChart(
-                    historyUiState.historyTicks,
-                    historyUiState.tickInterval,
+                BgHistoryChartOrDefault(
+                    diagramData = DiagramData.fromTickStates(historyUiState.historyTicks, historyUiState.tickInterval),
                     showMarkers = true,
                     modifier = Modifier.fillMaxSize()
                 )

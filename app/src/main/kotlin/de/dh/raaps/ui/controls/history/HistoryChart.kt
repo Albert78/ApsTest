@@ -58,10 +58,83 @@ import kotlin.random.Random
 
 private const val INITIAL_SHOW_HOURS = 4.0
 
+data class DiagramData(
+    val tickStates: List<ApsTickState?>,
+    val tickInterval: Minutes,
+    val validIndices: List<Int>,
+    val tickAtIndex0: Int,
+    val minX: Int,
+    val maxX: Int
+) {
+    companion object {
+        fun fromTickStates(tickStates: List<ApsTickState?>, tickInterval: Minutes): DiagramData? {
+            // Our tick states array contains an entry every tickInterval minutes, but some tick states
+            // are empty or contain an invalid glucose value. Create index on valid values.
+            val validBgValueIndices = tickStates.indices.filter {
+                val bg = tickStates[it]?.bg ?: return@filter false
+                bg.sampleKind != BgSampleKind.Invalid
+            }
+
+            // The first tick with is visible in the diagram.
+            // We always anchor the diagram index 0, so find the tick contained at index 0 or,
+            // if we don't find a valid tick there, find the first valid tick and calculate which
+            // tick would be found at index 0 otherwise.
+            val firstValidTickIndex = tickStates.indexOfFirst { it != null }
+            if (firstValidTickIndex == -1) {
+                return null
+            }
+            val firstValidTick = tickStates[firstValidTickIndex]!!.tick.value
+
+            // Needed for the conversion time <-> x value:
+            // - tickAtIndex0 * tickInterval is the time in ms since epoch start
+            // - The x value is aligned on the index in our tickStates list.
+            val tickAtIndex0 = firstValidTick - firstValidTickIndex * tickInterval.value
+            val tickAtEndIndex = tickAtIndex0 + tickStates.size
+
+            val ticksPerHour = 60 / tickInterval.value
+
+            // For the low value, we don't need to shift the min value to the past because typically,
+            // There is more data before our tick states and the diagram should just cut the series.
+//            val minTick = (tickAtIndex0 / ticksPerHour) * ticksPerHour - 10 / tickInterval.value
+//            val minX = minTick - tickAtIndex0
+            val minX = 0
+
+            // Enforce that after the last tick, the next full hour plus 10 minutes is visible in diagram.
+            // The calculation in time can be calculated via the tick.
+            val maxTick = ((tickAtEndIndex + ticksPerHour - 2) / ticksPerHour) * ticksPerHour + 10 / tickInterval.value
+            val maxX = maxTick - tickAtIndex0
+
+            return DiagramData(
+                tickStates,
+                tickInterval,
+                validBgValueIndices,
+                tickAtIndex0,
+                minX,
+                maxX
+            )
+        }
+
+        fun empty(tickInterval: Minutes = Minutes(5)): DiagramData {
+            val tickSizeMs = tickInterval.value * 60 * 1000
+
+            val timestamp = Timestamp.now()
+            val tickAtIndex0 = (timestamp.ms  / tickSizeMs).toInt()
+            return DiagramData(
+                tickStates = List(2) { null },
+                tickInterval = tickInterval,
+                validIndices = listOf(),
+                tickAtIndex0 = tickAtIndex0,
+                minX = 0,
+                maxX = 10
+            )
+        }
+    }
+}
+
+// TODO: Make it also usable for MMOL
 @Composable
 fun BgHistoryChart(
-    tickStates: List<ApsTickState?>,
-    tickInterval: Minutes,
+    diagramData: DiagramData,
     modifier: Modifier = Modifier,
     lowBgThreshold: Double = 70.0,
     highBgThreshold: Double = 170.0,
@@ -70,52 +143,57 @@ fun BgHistoryChart(
 ) {
     val modelProducer = remember { CartesianChartModelProducer() }
 
-    LaunchedEffect(tickStates) {
-        val validIndices = tickStates.indices.filter {
-            val bg = tickStates[it]?.bg ?: return@filter false
-            return@filter bg.sampleKind != BgSampleKind.Invalid
-        }
-        if (validIndices.isNotEmpty()) {
+    LaunchedEffect(diagramData) {
+        if (diagramData.validIndices.isNotEmpty()) {
             modelProducer.runTransaction {
                 lineSeries {
                     // Series 1: Smoothed values (smoothedValue) - Drawn first (under)
                     series(
-                        x = validIndices.toList(),
-                        y = validIndices.map { tickStates[it]!!.bg!!.smoothedValue.mgdl.toFloat() }
+                        x = diagramData.validIndices,
+                        y = diagramData.validIndices.map { diagramData.tickStates[it]!!.bg!!.smoothedValue.mgdl.toFloat() }
                     )
                     // Series 2: Raw values (origValue) - Drawn second (over)
                     series(
-                        x = validIndices.toList(),
-                        y = validIndices.map { tickStates[it]!!.bg!!.origValue.mgdl.toFloat() }
+                        x = diagramData.validIndices,
+                        y = diagramData.validIndices.map { diagramData.tickStates[it]!!.bg!!.origValue.mgdl.toFloat() }
                     )
                 }
             }
         }
     }
 
-    val xAxisValueFormatter = remember(tickStates, tickInterval) {
+    val xAxisValueFormatter = remember(diagramData) {
         CartesianValueFormatter { _, x, _ ->
-            val state = tickStates.getOrNull(x.toInt()) ?: return@CartesianValueFormatter ""
+            val virtualTick = diagramData.tickAtIndex0 + x.toInt()
             val calendar = Calendar.getInstance().apply {
-                timeInMillis = state.tick.value.toLong() * tickInterval.value.toLong() * 60_000L
+                timeInMillis = virtualTick * diagramData.tickInterval.value * 60_000L
             }
             String.format(Locale.getDefault(), "%02d", calendar.get(Calendar.HOUR_OF_DAY))
         }
     }
 
-    val xItemPlacer = remember(tickStates, tickInterval) {
-        val ticksPerHour = 60 / tickInterval.value.toInt()
-        val firstTickValue = tickStates.firstOrNull()?.tick?.value ?: 0
-        val offset = (ticksPerHour - (firstTickValue % ticksPerHour)) % ticksPerHour
-        HorizontalAxis.ItemPlacer.aligned(spacing = { ticksPerHour }, offset = { offset })
+    val xItemPlacer = remember(diagramData) {
+        val ticksPerHour = 60 / diagramData.tickInterval.value.toInt()
+
+        val ticksMinXToNextHour = ticksPerHour - (diagramData.tickAtIndex0 + diagramData.minX) % ticksPerHour
+
+        HorizontalAxis.ItemPlacer.aligned(spacing = { ticksPerHour }, offset = { ticksMinXToNextHour })
     }
 
-    val rangeProvider = remember {
+    val rangeProvider = remember(diagramData) {
         object : CartesianLayerRangeProvider {
             override fun getMinY(minY: Double, maxY: Double, extraStore: ExtraStore) = 40.0
             override fun getMaxY(minY: Double, maxY: Double, extraStore: ExtraStore): Double {
                 val baseMax = maxY.coerceAtLeast(200.0) + 10.0
                 return baseMax.coerceAtMost(410.0)
+            }
+
+            override fun getMinX(minX: Double, maxX: Double, extraStore: ExtraStore): Double {
+                return diagramData.minX.toDouble()
+            }
+
+            override fun getMaxX(minX: Double, maxX: Double, extraStore: ExtraStore): Double {
+                return diagramData.maxX.toDouble()
             }
         }
     }
@@ -168,17 +246,17 @@ fun BgHistoryChart(
     }
 
     val scrollState = rememberVicoScrollState(initialScroll = Scroll.Absolute.End)
-    val zoomState = rememberVicoZoomState(
-        initialZoom = Zoom.x(INITIAL_SHOW_HOURS * 60.0 / tickInterval.value.toDouble())
+    val zoomState = rememberVicoZoomState (
+        initialZoom = Zoom.x(INITIAL_SHOW_HOURS * 60.0 / diagramData.tickInterval.value.toDouble())
     )
 
-    val markerValueFormatter = remember(tickStates, tickInterval) {
+    val markerValueFormatter = remember(diagramData) {
         DefaultCartesianMarker.ValueFormatter { _, targets ->
             val x = targets.firstOrNull()?.x ?: return@ValueFormatter ""
-            val state = tickStates.getOrNull(x.toInt()) ?: return@ValueFormatter ""
 
+            val virtualTick = diagramData.tickAtIndex0 + x.toInt()
             val calendar = Calendar.getInstance().apply {
-                timeInMillis = state.tick.value.toLong() * tickInterval.value.toLong() * 60_000L
+                timeInMillis = virtualTick * diagramData.tickInterval.value * 60_000L
             }
             val timeStr = String.format(
                 Locale.getDefault(),
@@ -186,7 +264,9 @@ fun BgHistoryChart(
                 calendar.get(Calendar.HOUR_OF_DAY),
                 calendar.get(Calendar.MINUTE)
             )
-            val bgValue = state.bg?.smoothedValue?.mgdl?.toInt() ?: 0
+
+            val bgValue = diagramData.tickStates.getOrNull(x.toInt())?.bg?.smoothedValue?.mgdl?.toInt() ?: 0
+            if (bgValue == 0) return@ValueFormatter timeStr
 
             "$timeStr | $bgValue mg/dL"
         }
@@ -274,7 +354,26 @@ fun BgHistoryChart(
     )
 }
 
-fun generatedBg(minsInterval: Int, index: Int): SmoothedBgSample {
+@Composable
+fun BgHistoryChartOrDefault(
+    diagramData: DiagramData?,
+    modifier: Modifier = Modifier,
+    lowBgThreshold: Double = 70.0,
+    highBgThreshold: Double = 170.0,
+    showMarkers: Boolean = false,
+    onChartClick: (() -> Unit)? = null
+) {
+    BgHistoryChart(
+        diagramData ?: DiagramData.empty(),
+        modifier,
+        lowBgThreshold,
+        highBgThreshold,
+        showMarkers,
+        onChartClick
+    )
+}
+
+fun generatedBg(minsInterval: Short, index: Int, startTs: Timestamp): SmoothedBgSample {
     // Base curve: average 120, fluctuation of +/- 50 using overlapping sine waves
     val base = 170.0
     val curve = 100.0 * sin(index * minsInterval / 50.0) + 15.0 * sin(index / 12.0)
@@ -286,24 +385,33 @@ fun generatedBg(minsInterval: Int, index: Int): SmoothedBgSample {
         BgValue.fromMgDl(bgValue),
         BgValue.fromMgDl(bgValue),
         BgSampleKind.Value,
-        Timestamp(index.toLong())
+        Timestamp(startTs.ms + index * minsInterval * 60_000L)
     )
 }
 
-fun createSampleHistoryTicks(size: Int, minsInterval: Int): List<ApsTickState> = List(size) { index ->
-    ApsTickState(
-        ID_UNDEFINED, Tick(index), generatedBg(minsInterval, index)
-    )
+fun createSampleHistoryTicks(size: Int, minsInterval: Short, startTs: Timestamp = Timestamp.now()): List<ApsTickState> {
+    return List(size) { index ->
+        ApsTickState(
+            ID_UNDEFINED, Tick(index), generatedBg(minsInterval, index, startTs)
+        )
+    }
+}
+
+fun createSampleDiagramData(size: Int, minsInterval: Short, startTs: Timestamp = Timestamp.now()): DiagramData {
+    val tickStates = createSampleHistoryTicks(size, minsInterval, startTs)
+    return DiagramData.fromTickStates(tickStates, Minutes(minsInterval))!!
 }
 
 @Preview(showBackground = true)
 @Composable
 fun HistoryChart5Preview() {
-    val historyTicks = createSampleHistoryTicks(120, 5)
+    val MS_IN_HOUR = 60 * 60 * 1000L
+    val MS_IN_TEN_MINUTES = 10 * 60 * 1000L
+    val startTs: Timestamp = Timestamp((System.currentTimeMillis() / MS_IN_HOUR) * MS_IN_HOUR + MS_IN_TEN_MINUTES)
+    val diagramData = createSampleDiagramData(120, 5, startTs)
     ApsTheme {
         BgHistoryChart(
-            tickStates = historyTicks,
-            tickInterval = Minutes(5)
+            diagramData
         )
     }
 }
@@ -311,11 +419,10 @@ fun HistoryChart5Preview() {
 @Preview(showBackground = true)
 @Composable
 fun HistoryChart1Preview() {
-    val historyTicks = createSampleHistoryTicks(600, 1)
+    val diagramData = createSampleDiagramData(600, 1)
     ApsTheme {
         BgHistoryChart(
-            tickStates = historyTicks,
-            tickInterval = Minutes(1)
+            diagramData
         )
     }
 }
