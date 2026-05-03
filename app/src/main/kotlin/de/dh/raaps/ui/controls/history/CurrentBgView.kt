@@ -13,7 +13,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableLongStateOf
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -31,6 +31,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import de.dh.raaps.core.api.data.BgValue
+import de.dh.raaps.core.api.data.GlucoseUnit
 import de.dh.raaps.core.api.data.Timestamp
 import de.dh.raaps.ui.composables.AppColorBlue
 import de.dh.raaps.ui.composables.LightGreenA700
@@ -41,44 +42,29 @@ import de.dh.raaps.ui.theme.ApsTheme
 
 @Composable
 fun CurrentBgView(
-    currentBgUiState: CurrentBgUiState,
+    centerText: String,
+    textBgColor: Color,
+    deltaText: String?,
+    timestamp: Timestamp?,
+    trendAngle: Float?,
     modifier: Modifier = Modifier
 ) {
-    val bgTimestamp = currentBgUiState.timestamp.ms
-    var diffMs by remember(bgTimestamp) { mutableLongStateOf(System.currentTimeMillis() - bgTimestamp) }
-    LaunchedEffect(bgTimestamp) {
-        while (true) {
-            val now = System.currentTimeMillis()
-            diffMs = now - bgTimestamp
-            // Wait until the next 10s boundary relative to the BG timestamp
-            val next10sBoundary = ((diffMs / 10000) + 1) * 10000
-            val delayTime = next10sBoundary - diffMs
-            kotlinx.coroutines.delay(delayTime)
-        }
+    // diffMs is null if timestamp is null
+    var diffMs by remember(timestamp) {
+        mutableStateOf(timestamp?.let { System.currentTimeMillis() - it.ms })
     }
+    LaunchedEffect(timestamp) {
+        timestamp?.let { ts ->
+            while (true) {
+                val now = System.currentTimeMillis()
+                val currentDiff = now - ts.ms
+                diffMs = currentDiff
 
-    val bgColor =
-        when (currentBgUiState.state) {
-            CurrentBgState.Valid -> when {
-                currentBgUiState.bgValue.mgdl < 50 -> Red
-                currentBgUiState.bgValue.mgdl < 70 -> Yellow
-                currentBgUiState.bgValue.mgdl < 180 -> LightGreenA700
-                currentBgUiState.bgValue.mgdl < 250 -> Yellow
-                else -> Red
+                // Wait until the next 10s boundary relative to the BG timestamp
+                val next10sBoundary = ((currentDiff / 10000) + 1) * 10000
+                kotlinx.coroutines.delay(next10sBoundary - currentDiff)
             }
-            CurrentBgState.Old -> Color.DarkGray
-            else -> Color.DarkGray
         }
-
-    val trendAngle = when (currentBgUiState.trend) {
-        BgTrend.DoubleUp -> -60f
-        BgTrend.SingleUp -> -45f
-        BgTrend.FortyFiveUp -> -25f
-        BgTrend.Flat -> 0f
-        BgTrend.FortyFiveDown -> 25f
-        BgTrend.SingleDown -> 45f
-        BgTrend.DoubleDown -> 60f
-        BgTrend.NotComputable -> 0f
     }
 
     Box(
@@ -101,7 +87,7 @@ fun CurrentBgView(
             )
 
             // Trend indicator
-            if (currentBgUiState.state == CurrentBgState.Valid) {
+            if (trendAngle != null) {
                 // Highlight Arc around the trend
                 drawArc(
                     color = AppColorBlue,
@@ -143,19 +129,11 @@ fun CurrentBgView(
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.spacedBy((-6).dp)
         ) {
-            val deltaText = if (currentBgUiState.state == CurrentBgState.Valid && currentBgUiState.isDeltaValid)
-                currentBgUiState.delta.toDiff(currentBgUiState.glucoseUnit)
-            else
-                ""
             Text(
-                text = deltaText,
+                text = deltaText ?: "",
                 style = MaterialTheme.typography.bodyMedium,
                 color = Color.Gray
             )
-            val centerText = if (currentBgUiState.state == CurrentBgState.Valid || currentBgUiState.state == CurrentBgState.Old)
-                currentBgUiState.bgValue.toString(currentBgUiState.glucoseUnit)
-            else
-                "?"
             Text(
                 text = centerText,
                 style = MaterialTheme.typography.displayLarge.copy(
@@ -163,11 +141,9 @@ fun CurrentBgView(
                     fontWeight = FontWeight.Bold,
                     lineHeight = 48.sp
                 ),
-                color = bgColor
+                color = textBgColor
             )
-            val timeAgoText = if (currentBgUiState.state != CurrentBgState.Invalid) {
-                shortRelativeTimeAgo(diffMs)
-            } else ""
+            val timeAgoText = if (diffMs != null) shortRelativeTimeAgo(diffMs!!) else ""
             Text(
                 text = timeAgoText,
                 style = MaterialTheme.typography.bodySmall,
@@ -177,16 +153,66 @@ fun CurrentBgView(
     }
 }
 
+@Composable
+fun CurrentBgView(
+    currentBgUiState: CurrentBgUiState,
+    modifier: Modifier = Modifier
+) {
+    val currentBgValue = currentBgUiState.currentBgValue
+
+    val centerText = when (currentBgValue?.bgValue) {
+        null -> "?"
+        else -> currentBgValue.bgValue.toString(currentBgValue.glucoseUnit)
+    }
+
+    val textBgColor =
+        if (currentBgValue == null) {
+            Color.DarkGray
+        } else if (currentBgValue.isValueOld) {
+            Color.DarkGray
+        } else when {
+            currentBgValue.bgValue.mgdl < 50 -> Red
+            currentBgValue.bgValue.mgdl < 70 -> Yellow
+            currentBgValue.bgValue.mgdl < 180 -> LightGreenA700
+            currentBgValue.bgValue.mgdl < 250 -> Yellow
+            else -> Red
+        }
+
+    val deltaText = currentBgValue?.delta?.toDiff(currentBgValue.glucoseUnit)
+
+    val trendAngle =
+        when (currentBgValue?.trend) {
+            null -> null
+            BgTrend.DoubleUp -> -60f
+            BgTrend.SingleUp -> -45f
+            BgTrend.FortyFiveUp -> -25f
+            BgTrend.Flat -> 0f
+            BgTrend.FortyFiveDown -> 25f
+            BgTrend.SingleDown -> 45f
+            BgTrend.DoubleDown -> 60f
+            BgTrend.NotComputable -> 0f
+        }
+
+    CurrentBgView(
+        centerText,
+        textBgColor,
+        deltaText,
+        currentBgValue?.timestamp,
+        trendAngle,
+        modifier
+    )
+}
+
 fun createSampleGoodBgUiState(): CurrentBgUiState {
     return CurrentBgUiState(
         isLoading = false,
         isError = false,
-        state = CurrentBgState.Valid,
-        bgValue = BgValue(125),
-        delta = BgValue(+10),
-        isDeltaValid = true,
-        trend = BgTrend.FortyFiveUp,
-        timestamp = Timestamp.now().minusMinutes(90)
+        CurrentBgData(
+            bgValue = BgValue(125),
+            delta = BgValue(+10),
+            trend = BgTrend.FortyFiveUp,
+            timestamp = Timestamp.now().minusMinutes(90)
+        )
     )
 }
 
@@ -198,12 +224,7 @@ fun BgInvalidViewPreview() {
             currentBgUiState = CurrentBgUiState(
                 isLoading = false,
                 isError = false,
-                state = CurrentBgState.Invalid,
-                bgValue = BgValue(325),
-                delta = BgValue(+20),
-                isDeltaValid = false,
-                trend = BgTrend.DoubleUp,
-                timestamp = Timestamp.now().minusMinutes(3)
+                currentBgValue = CurrentBgData.invalid()
             )
         )
     }
@@ -217,12 +238,10 @@ fun BgOldViewPreview() {
             currentBgUiState = CurrentBgUiState(
                 isLoading = false,
                 isError = false,
-                state = CurrentBgState.Old,
-                bgValue = BgValue(110),
-                delta = BgValue(+20),
-                isDeltaValid = false,
-                trend = BgTrend.DoubleUp,
-                timestamp = Timestamp.now().minusHours(3)
+                currentBgValue = CurrentBgData.oldValue(
+                    bgValue = BgValue(110),
+                    timestamp = Timestamp.now().minusHours(3)
+                )
             )
         )
     }
@@ -236,11 +255,12 @@ fun BgVeryHighViewPreview() {
             currentBgUiState = CurrentBgUiState(
                 isLoading = false,
                 isError = false,
-                state = CurrentBgState.Valid,
-                bgValue = BgValue(325),
-                delta = BgValue(+20),
-                trend = BgTrend.DoubleUp,
-                timestamp = Timestamp.now().minusMinutes(3)
+                currentBgValue = CurrentBgData.valid(
+                    bgValue = BgValue(325),
+                    delta = BgValue(+20),
+                    trend = BgTrend.DoubleUp,
+                    timestamp = Timestamp.now().minusMinutes(3)
+                )
             )
         )
     }
@@ -254,12 +274,12 @@ fun BgHighViewPreview() {
             currentBgUiState = CurrentBgUiState(
                 isLoading = false,
                 isError = false,
-                state = CurrentBgState.Valid,
-                bgValue = BgValue(225),
-                delta = BgValue(+15),
-                isDeltaValid = true,
-                trend = BgTrend.SingleUp,
-                timestamp = Timestamp.now().minusSeconds(20)
+                currentBgValue = CurrentBgData.valid(
+                    bgValue = BgValue(225),
+                    delta = BgValue(+15),
+                    trend = BgTrend.SingleUp,
+                    timestamp = Timestamp.now().minusSeconds(20)
+                )
             )
         )
     }
@@ -283,10 +303,13 @@ fun BgGoodFlatViewPreview() {
             currentBgUiState = CurrentBgUiState(
                 isLoading = false,
                 isError = false,
-                state = CurrentBgState.Valid,
-                bgValue = BgValue(125),
-                delta = BgValue(+0),
-                isDeltaValid = true
+                currentBgValue = CurrentBgData.valid(
+                    bgValue = BgValue(125),
+                    delta = BgValue(+0),
+                    trend = BgTrend.Flat,
+                    timestamp = Timestamp.now(),
+                    glucoseUnit = GlucoseUnit.MG_DL
+                )
             )
         )
     }
@@ -300,10 +323,13 @@ fun BgLowViewPreview() {
             currentBgUiState = CurrentBgUiState(
                 isLoading = false,
                 isError = false,
-                state = CurrentBgState.Valid,
-                bgValue = BgValue(60),
-                delta = BgValue(-5),
-                trend = BgTrend.FortyFiveDown
+                currentBgValue = CurrentBgData.valid(
+                    bgValue = BgValue(60),
+                    delta = BgValue(-5),
+                    trend = BgTrend.FortyFiveDown,
+                    timestamp = Timestamp.now(),
+                    glucoseUnit = GlucoseUnit.MG_DL
+                )
             )
         )
     }
@@ -317,11 +343,13 @@ fun BgVeryLowViewPreview() {
             currentBgUiState = CurrentBgUiState(
                 isLoading = false,
                 isError = false,
-                state = CurrentBgState.Valid,
-                bgValue = BgValue(45),
-                delta = BgValue(-10),
-                isDeltaValid = true,
-                trend = BgTrend.SingleDown
+                currentBgValue = CurrentBgData.valid(
+                    bgValue = BgValue(45),
+                    delta = BgValue(-10),
+                    trend = BgTrend.SingleDown,
+                    timestamp = Timestamp.now(),
+                    glucoseUnit = GlucoseUnit.MG_DL
+                )
             )
         )
     }

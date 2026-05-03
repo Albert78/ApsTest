@@ -33,19 +33,51 @@ enum class BgTrend {
     NotComputable
 }
 
-enum class CurrentBgState {
-    Valid, Old, Invalid
+data class CurrentBgData (
+    val isValueOld: Boolean = false,
+    val bgValue: BgValue = BgValue(0),
+    val delta: BgValue? = null,
+    val trend: BgTrend? = BgTrend.Flat,
+    val timestamp: Timestamp = Timestamp(0),
+    val glucoseUnit: GlucoseUnit = GlucoseUnit.MG_DL
+) {
+    companion object {
+        fun valid(
+            bgValue: BgValue = BgValue(0),
+            delta: BgValue? = null,
+            trend: BgTrend? = BgTrend.Flat,
+            timestamp: Timestamp = Timestamp(0),
+            glucoseUnit: GlucoseUnit = GlucoseUnit.MG_DL
+        ) = CurrentBgData(
+            isValueOld = false,
+            bgValue = bgValue,
+            delta = delta,
+            trend = trend,
+            timestamp = timestamp,
+            glucoseUnit = glucoseUnit
+        )
+
+        fun oldValue(
+            bgValue: BgValue = BgValue(0),
+            timestamp: Timestamp = Timestamp(0),
+            glucoseUnit: GlucoseUnit = GlucoseUnit.MG_DL
+        ) = CurrentBgData(
+            isValueOld = true,
+            bgValue = bgValue,
+            delta = null,
+            trend = null,
+            timestamp = timestamp,
+            glucoseUnit = glucoseUnit
+        )
+
+        fun invalid(): CurrentBgData? = null
+    }
 }
+
 data class CurrentBgUiState(
     val isLoading: Boolean,
     val isError: Boolean,
-    val state: CurrentBgState = CurrentBgState.Invalid,
-    val bgValue: BgValue = BgValue(0),
-    val delta: BgValue = BgValue(0),
-    val isDeltaValid: Boolean = false,
-    val trend: BgTrend = BgTrend.Flat,
-    val timestamp: Timestamp = Timestamp.now(),
-    val glucoseUnit: GlucoseUnit = GlucoseUnit.MG_DL
+    val currentBgValue: CurrentBgData? = null
 )
 
 data class HistoryUiState(
@@ -116,18 +148,21 @@ class HistoryViewModel(
                         }
                     )
                 if (olderTickData == null) {
-                    it.copy(isLoading = false, isError = false, state = CurrentBgState.Invalid)
+                    // Invalid value
+                    CurrentBgUiState(isLoading = false, isError = false, currentBgValue = CurrentBgData.invalid())
                 } else {
                     // Older tick state present
                     val bg = olderTickData.first!!
                     val timestamp = olderTickData.second!!
-                    it.copy(
+
+                    // Old value
+                    CurrentBgUiState(
                         isLoading = false,
                         isError = false,
-                        state = CurrentBgState.Old,
-                        bgValue = bg.origValue,
-                        isDeltaValid = false,
-                        timestamp = timestamp
+                        currentBgValue = CurrentBgData.oldValue(
+                            bgValue = bg.origValue,
+                            timestamp = timestamp
+                        )
                     )
                 }
             } else {
@@ -135,7 +170,7 @@ class HistoryViewModel(
 
                 // Calculate trend using linear regression over the points in the window
                 val n = recentTicksWithBg.size
-                val (regressionDelta5m, deltaValid) = if (n >= 2) {
+                val regressionDelta5m: Double? = if (n >= 2) {
                     val firstTs = recentTicksWithBg.first().bg!!.timestamp.ms
                     var sumX = 0.0
                     var sumY = 0.0
@@ -152,16 +187,13 @@ class HistoryViewModel(
                     val denominator = n * sumXX - sumX * sumX
                     if (denominator != 0.0) {
                         val slopePerMin = (n * sumXY - sumX * sumY) / denominator
-                        Pair(
-                            slopePerMin * 5.0, // Normalize to a 5-minute interval
-                            true
-                        )
-                    } else Pair(0.0, true)
+                        slopePerMin * 5.0 // Normalize to a 5-minute interval
+                    } else 0.0
                 } else {
-                    Pair(0.0, false)
+                    null
                 }
 
-                val trend = when {
+                val trend: BgTrend? = if (regressionDelta5m == null) null else when {
                     regressionDelta5m >= 14.0 -> BgTrend.DoubleUp
                     regressionDelta5m >= 10.0 -> BgTrend.SingleUp
                     regressionDelta5m >= 6.0 -> BgTrend.FortyFiveUp
@@ -171,16 +203,17 @@ class HistoryViewModel(
                     else -> BgTrend.Flat
                 }
 
+                // Valid value
                 CurrentBgUiState(
                     isLoading = false,
                     isError = false,
-                    state = CurrentBgState.Valid,
-                    bgValue = bgValue,
-                    delta = BgValue.fromMgDl(regressionDelta5m.toInt()),
-                    isDeltaValid = deltaValid,
-                    trend = trend,
-                    timestamp = latest.bg!!.timestamp,
-                    glucoseUnit = glucoseUnit
+                    currentBgValue = CurrentBgData.valid(
+                        bgValue = bgValue,
+                        delta = regressionDelta5m?.let { BgValue.fromMgDl(it.toInt()) },
+                        trend = trend,
+                        timestamp = latest.bg!!.timestamp,
+                        glucoseUnit = glucoseUnit
+                    )
                 )
             }
         }
