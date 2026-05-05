@@ -25,7 +25,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import de.dh.raaps.R
 import de.dh.raaps.ui.screens.common.Icon_Screen_Back
-import de.dh.raaps.ui.theme.ApsTheme
+import de.dh.raaps.ui.theme.AppTheme
 
 fun screenTitle(text: String): @Composable () -> Unit {
     return {
@@ -53,7 +53,7 @@ fun ScreenTitle(
 @Preview(showBackground = true, uiMode = Configuration.UI_MODE_NIGHT_YES)
 @Composable
 fun ScreenTitlePreview() {
-    ApsTheme {
+    AppTheme {
         val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior()
 
         Scaffold(

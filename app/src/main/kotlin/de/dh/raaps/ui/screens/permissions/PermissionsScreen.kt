@@ -36,12 +36,12 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import de.dh.raaps.R
 import de.dh.raaps.ui.composables.contentScrollIndicator
+import de.dh.raaps.ui.composables.screenTitle
 import de.dh.raaps.ui.screens.common.Icon_Check_No
 import de.dh.raaps.ui.screens.common.Icon_Check_Yes
 import de.dh.raaps.ui.screens.common.Icon_Info
 import de.dh.raaps.ui.screens.common.Icon_Screen_Back
-import de.dh.raaps.ui.theme.ApsTheme
-import de.dh.raaps.ui.composables.screenTitle
+import de.dh.raaps.ui.theme.AppTheme
 
 @Composable
 fun PermissionsScreen(
@@ -277,7 +277,7 @@ fun PermissionItem(
 @Preview(showBackground = true, heightDp = 1300)
 @Composable
 fun PermissionsScreenPreview() {
-    ApsTheme {
+    AppTheme {
         PermissionsScreenContent(
             uiModel = PermissionsUiModel.Companion.create(
                 notificationPermissionStatus = PermissionStatus.Companion.create(isGranted = false, isNeeded = true),
@@ -295,7 +295,7 @@ fun PermissionsScreenPreview() {
 
 @Composable
 fun PermissionsItemPreview(status: PermissionStatus) {
-    ApsTheme {
+    AppTheme {
         Surface {
             PermissionItem(
                 description = "Dies ist die Beschreibung der Berechtigung",

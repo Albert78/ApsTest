@@ -50,7 +50,7 @@ import de.dh.raaps.ui.composables.BlueA200
 import de.dh.raaps.ui.composables.DeepOrangeA700
 import de.dh.raaps.ui.composables.RedA700
 import de.dh.raaps.ui.composables.Yellow
-import de.dh.raaps.ui.theme.ApsTheme
+import de.dh.raaps.ui.theme.AppTheme
 import java.util.Calendar
 import java.util.Locale
 import kotlin.math.sin
@@ -411,7 +411,7 @@ fun HistoryChart5Preview() {
     val MS_IN_TEN_MINUTES = 10 * 60 * 1000L
     val startTs: Timestamp = Timestamp((System.currentTimeMillis() / MS_IN_HOUR) * MS_IN_HOUR + MS_IN_TEN_MINUTES)
     val diagramData = createSampleDiagramData(120, 5, startTs)
-    ApsTheme {
+    AppTheme {
         BgHistoryChart(
             diagramData
         )
@@ -422,7 +422,7 @@ fun HistoryChart5Preview() {
 @Composable
 fun HistoryChart1Preview() {
     val diagramData = createSampleDiagramData(600, 1)
-    ApsTheme {
+    AppTheme {
         BgHistoryChart(
             diagramData
         )

@@ -6,7 +6,8 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import de.dh.raaps.AppStateRepository
 import de.dh.raaps.MainApplication
-import de.dh.raaps.ui.common.THEME_SYSTEM_MODE
+import de.dh.raaps.themeMode
+import de.dh.raaps.ui.common.ThemeMode
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -19,7 +20,7 @@ import kotlinx.coroutines.launch
 data class PreferencesUiState(
     val isLoading: Boolean,
     val isError: Boolean,
-    val themeMode: String = THEME_SYSTEM_MODE
+    val themeMode: ThemeMode = ThemeMode.SYSTEM,
 )
 
 class PreferencesViewModel(
@@ -50,11 +51,23 @@ class PreferencesViewModel(
             _uiState.update { PreferencesUiState(isLoading = true, isError = false) }
             return
         }
+        val themeMode = preferences.themeMode
+
         _uiState.update { PreferencesUiState(
             isLoading = false,
             isError = false,
-            // TODO: Theme mode
+            themeMode = themeMode,
         ) }
+    }
+
+    /**
+     * Updates the theme mode in the repository.
+     * The application will react automatically to this change.
+     */
+    fun setThemeMode(newMode: ThemeMode) {
+        viewModelScope.launch {
+            appStateRepository.setThemeMode(newMode)
+        }
     }
 
     companion object {

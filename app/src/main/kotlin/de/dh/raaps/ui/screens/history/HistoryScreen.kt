@@ -27,7 +27,7 @@ import de.dh.raaps.ui.controls.history.DiagramData
 import de.dh.raaps.ui.controls.history.HistoryUiState
 import de.dh.raaps.ui.controls.history.HistoryViewModel
 import de.dh.raaps.ui.controls.history.createSampleHistoryTicks
-import de.dh.raaps.ui.theme.ApsTheme
+import de.dh.raaps.ui.theme.AppTheme
 
 @Composable
 fun HistoryScreen(
@@ -89,7 +89,7 @@ fun createSampleHistoryUiState(): HistoryUiState {
 @Preview(showBackground = true)
 @Composable
 fun HistoryScreenPreview() {
-    ApsTheme {
+    AppTheme {
         HistoryContent(
             historyUiState = createSampleHistoryUiState()
         )

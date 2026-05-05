@@ -131,7 +131,7 @@ private val DarkColors = darkColorScheme(
 )
 
 @Composable
-fun ApsTheme(
+fun AppTheme(
     darkTheme: Boolean = isSystemInDarkTheme(),
     content: @Composable () -> Unit
 ) {
@@ -164,4 +164,3 @@ fun ApsTheme(
         )
     }
 }
-

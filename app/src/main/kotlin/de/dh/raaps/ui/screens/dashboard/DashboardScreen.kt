@@ -45,7 +45,7 @@ import de.dh.raaps.ui.screens.history.createSampleHistoryUiState
 import de.dh.raaps.ui.screens.permissions.PermissionStatus
 import de.dh.raaps.ui.screens.permissions.PermissionsUiModel
 import de.dh.raaps.ui.screens.permissions.PermissionsViewModel
-import de.dh.raaps.ui.theme.ApsTheme
+import de.dh.raaps.ui.theme.AppTheme
 
 @Composable
 fun DashboardScreen(
@@ -191,7 +191,7 @@ fun DashboardContent(
 @Preview(showBackground = true)
 @Composable
 fun DashboardPreview() {
-    ApsTheme {
+    AppTheme {
         DashboardContent(
             dashboardUiState = DashboardUiState(isLoading = false, isError = false),
             currentBgUiState = createSampleGoodBgUiState(),
@@ -215,7 +215,7 @@ fun DashboardPreview() {
 @Preview(showBackground = true)
 @Composable
 fun DashboardPermissionsWarningPreview() {
-    ApsTheme {
+    AppTheme {
         DashboardContent(
             dashboardUiState = DashboardUiState(isLoading = false, isError = false),
             currentBgUiState = createSampleGoodBgUiState(),

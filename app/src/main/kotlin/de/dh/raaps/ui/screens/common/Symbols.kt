@@ -42,7 +42,7 @@ import de.dh.raaps.ui.icons.Backup
 import de.dh.raaps.ui.icons.Config_Outline
 import de.dh.raaps.ui.icons.Restore
 import de.dh.raaps.ui.icons.Theme_Light_Dark
-import de.dh.raaps.ui.theme.ApsTheme
+import de.dh.raaps.ui.theme.AppTheme
 
 // Menu and header icons
 val Menu_More = Icons.Default.MoreVert
@@ -110,7 +110,7 @@ private val iconsForPreview = listOf(
 @Preview(showBackground = true, widthDp = 320, heightDp = 1400, name = "Icon Catalog")
 @Composable
 fun IconCatalogPreview() {
-    ApsTheme {
+    AppTheme {
         Surface {
             LazyColumn(
                 modifier = Modifier.padding(16.dp),

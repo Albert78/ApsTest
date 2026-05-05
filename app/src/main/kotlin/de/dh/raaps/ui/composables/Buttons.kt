@@ -15,7 +15,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import de.dh.raaps.ui.theme.ApsTheme
+import de.dh.raaps.ui.theme.AppTheme
 
 fun smallPaddingValues(): PaddingValues = PaddingValues(
     start = 16.dp,
@@ -95,7 +95,7 @@ fun NormalButton(
 @Preview(showBackground = true, uiMode = Configuration.UI_MODE_NIGHT_YES)
 @Composable
 fun PrimaryButtonPreview() {
-    ApsTheme {
+    AppTheme {
         Surface() {
             PrimaryButton(
                 modifier = Modifier.padding(8.dp),
@@ -111,7 +111,7 @@ fun PrimaryButtonPreview() {
 @Preview(showBackground = true, uiMode = Configuration.UI_MODE_NIGHT_YES)
 @Composable
 fun SecondaryButtonPreview() {
-    ApsTheme {
+    AppTheme {
         Surface() {
             SecondaryButton(
                 modifier = Modifier.padding(8.dp),
@@ -127,7 +127,7 @@ fun SecondaryButtonPreview() {
 @Preview(showBackground = false, uiMode = Configuration.UI_MODE_NIGHT_YES)
 @Composable
 fun OutlinedButtonPreview() {
-    ApsTheme {
+    AppTheme {
         Surface() {
             NormalButton(
                 modifier = Modifier.padding(8.dp),
@@ -138,4 +138,3 @@ fun OutlinedButtonPreview() {
         }
     }
 }
-

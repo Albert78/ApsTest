@@ -33,7 +33,7 @@ import androidx.compose.ui.unit.dp
 import de.dh.raaps.R
 import de.dh.raaps.ui.screens.common.Icon_Clear
 import de.dh.raaps.ui.screens.common.Icon_Info
-import de.dh.raaps.ui.theme.ApsTheme
+import de.dh.raaps.ui.theme.AppTheme
 
 @Composable
 fun ExpandableInfoCard(
@@ -138,7 +138,7 @@ fun ExpandableInfoCard(
 @Preview(showBackground = true, name = "Collapsed State (Dark)", uiMode = Configuration.UI_MODE_NIGHT_YES)
 @Composable
 private fun ExpandableInfoCardPreview() {
-    ApsTheme {
+    AppTheme {
         Surface {
             ExpandableInfoCard(
                 imageVector = Icon_Info,
@@ -155,7 +155,7 @@ private fun ExpandableInfoCardPreview() {
 @Preview(showBackground = true, name = "Expanded State (Dark)", uiMode = Configuration.UI_MODE_NIGHT_YES)
 @Composable
 private fun ExpandableInfoCardExpandedDarkPreview() {
-    ApsTheme {
+    AppTheme {
         ExpandableInfoCard(
             imageVector = Icon_Info,
             infoText = "Invisible Short Text",

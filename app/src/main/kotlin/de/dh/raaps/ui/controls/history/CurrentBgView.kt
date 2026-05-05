@@ -38,7 +38,7 @@ import de.dh.raaps.ui.composables.LightGreenA700
 import de.dh.raaps.ui.composables.Red
 import de.dh.raaps.ui.composables.Yellow
 import de.dh.raaps.ui.screens.common.shortRelativeTimeAgo
-import de.dh.raaps.ui.theme.ApsTheme
+import de.dh.raaps.ui.theme.AppTheme
 
 @Composable
 fun CurrentBgView(
@@ -219,7 +219,7 @@ fun createSampleGoodBgUiState(): CurrentBgUiState {
 @Preview(showBackground = true)
 @Composable
 fun BgInvalidViewPreview() {
-    ApsTheme {
+    AppTheme {
         CurrentBgView(
             currentBgUiState = CurrentBgUiState(
                 isLoading = false,
@@ -233,7 +233,7 @@ fun BgInvalidViewPreview() {
 @Preview(showBackground = true)
 @Composable
 fun BgOldViewPreview() {
-    ApsTheme {
+    AppTheme {
         CurrentBgView(
             currentBgUiState = CurrentBgUiState(
                 isLoading = false,
@@ -250,7 +250,7 @@ fun BgOldViewPreview() {
 @Preview(showBackground = true)
 @Composable
 fun BgVeryHighViewPreview() {
-    ApsTheme {
+    AppTheme {
         CurrentBgView(
             currentBgUiState = CurrentBgUiState(
                 isLoading = false,
@@ -269,7 +269,7 @@ fun BgVeryHighViewPreview() {
 @Preview(showBackground = true)
 @Composable
 fun BgHighViewPreview() {
-    ApsTheme {
+    AppTheme {
         CurrentBgView(
             currentBgUiState = CurrentBgUiState(
                 isLoading = false,
@@ -288,7 +288,7 @@ fun BgHighViewPreview() {
 @Preview(showBackground = true)
 @Composable
 fun BgGoodUpViewPreview() {
-    ApsTheme {
+    AppTheme {
         CurrentBgView(
             currentBgUiState = createSampleGoodBgUiState()
         )
@@ -298,7 +298,7 @@ fun BgGoodUpViewPreview() {
 @Preview(showBackground = true)
 @Composable
 fun BgGoodFlatViewPreview() {
-    ApsTheme {
+    AppTheme {
         CurrentBgView(
             currentBgUiState = CurrentBgUiState(
                 isLoading = false,
@@ -318,7 +318,7 @@ fun BgGoodFlatViewPreview() {
 @Preview(showBackground = true)
 @Composable
 fun BgLowViewPreview() {
-    ApsTheme {
+    AppTheme {
         CurrentBgView(
             currentBgUiState = CurrentBgUiState(
                 isLoading = false,
@@ -338,7 +338,7 @@ fun BgLowViewPreview() {
 @Preview(showBackground = true)
 @Composable
 fun BgVeryLowViewPreview() {
-    ApsTheme {
+    AppTheme {
         CurrentBgView(
             currentBgUiState = CurrentBgUiState(
                 isLoading = false,
