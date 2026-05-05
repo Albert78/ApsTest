@@ -37,22 +37,22 @@ class ApsRollingHistory(
      * Advances the history's timeframe to a new point in time.
      * Use this to move the "window" forward, e.g., every 5 minutes or on new data.
      */
-    fun advanceTo(newAnchorTick: Tick) {
+    fun advanceTo(newAnchorTick: Tick): Boolean {
         if (anchorTick == Tick.invalid()) {
+            // Empty state
             anchorTick = newAnchorTick
-            buffer[bufferIndex(newAnchorTick)] = ApsTickState.empty(newAnchorTick)
-            return
-        }
-
-        if (newAnchorTick > anchorTick) {
+            return true
+        } else if (newAnchorTick > anchorTick) {
             // Clear the slots that have become "stale" due to time advancing
             val ticksToClear = (newAnchorTick.value - anchorTick.value).coerceAtMost(capacity)
             for (i in 1..ticksToClear) {
                 val tick = Tick(anchorTick.value + i)
-                buffer[bufferIndex(tick)] = ApsTickState.empty(tick)
-                // TODO: Write ApsState to database
+                buffer[bufferIndex(tick)] = null
             }
             anchorTick = newAnchorTick
+            return true
+        } else {
+            return false
         }
     }
 
@@ -60,18 +60,25 @@ class ApsRollingHistory(
      * Tries to get an entry of our state history.
      * Only succeeds if the given tick falls within the current history window.
      */
-    fun getApsTickState(tick: Tick, advanceToTick: Boolean): ApsTickState? {
-        // Ensure the anchor is at least as new as the incoming data
-        if (tick > anchorTick && advanceToTick) {
-            advanceTo(tick)
-        }
-
+    fun getApsTickState(tick: Tick): ApsTickState? {
         val minValidTick = getFirstTick().value
 
         if (tick.value in minValidTick..anchorTick.value) {
             return buffer[bufferIndex(tick)]
         }
         return null
+    }
+
+    fun getOrCreateTickState(tick: Tick): ApsTickState? {
+        if (tick > anchorTick) {
+            advanceTo(tick)
+        }
+        if (tick.value !in anchorTick.value - capacity + 1..anchorTick.value) {
+            return null
+        }
+        val result = ApsTickState.empty(tick)
+        buffer[bufferIndex(tick)] = result
+        return result
     }
 
     private fun bufferIndex(tick: Tick): Int {
@@ -97,14 +104,9 @@ class ApsRollingHistory(
             }
         }
 
-        // Fill empty buffer spaces with empty tick states
-        for (i in 0..<capacity) {
-            val tick = Tick(firstTick.value + i)
-            val index = bufferIndex(tick)
-            if (buffer[index] == null) {
-                buffer[index] = ApsTickState.empty(tick)
-            }
-        }
+        // Buffer places which are not filled with the given values are
+        // intentionally left null. This can happen when the app starts with a fresh database,
+        // for example.
     }
 
     /**
@@ -120,7 +122,7 @@ class ApsRollingHistory(
         val result = List(capacity) { i ->
             val tickValue = currentAnchor.value - capacity + 1 + i
             if (tickValue >= 0) {
-                buffer[bufferIndex(Tick(tickValue)) % capacity]
+                buffer[bufferIndex(Tick(tickValue))]
             } else {
                 null
             }

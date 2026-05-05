@@ -144,8 +144,10 @@ fun BgHistoryChart(
     val modelProducer = remember { CartesianChartModelProducer() }
 
     LaunchedEffect(diagramData) {
-        if (diagramData.validIndices.isNotEmpty()) {
-            modelProducer.runTransaction {
+        modelProducer.runTransaction {
+            if (diagramData.validIndices.isEmpty()) {
+                lineSeries { }
+            } else{
                 lineSeries {
                     // Series 1: Smoothed values (smoothedValue) - Drawn first (under)
                     series(

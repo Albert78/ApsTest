@@ -216,21 +216,29 @@ class APSCore(
      */
     suspend fun updateBg(bg: SmoothedBgSample) {
         busyWork {
+            if (bg.sampleKind == BgSampleKind.Invalid) {
+                Log.d(TAG, "Skipping BG entry $bg because it has an invalid value")
+                return@busyWork
+            } else {
+                Log.d(TAG, "New BG: $bg")
+            }
             atomic {
-                Log.d(TAG, "Got new BG: $bg")
-                lastBg = currentBg
-                currentBg = bg
+                if (currentBg == null || bg.timestamp >= currentBg!!.timestamp) {
+                    lastBg = currentBg
+                    currentBg = bg
+                }
+
                 val tick = rollingHistory.tick(bg.timestamp)
                 val lastAnchorTick = rollingHistory.anchorTick
-                val tickState = rollingHistory.getApsTickState(tick, true) ?: return@atomic
+                val tickState = rollingHistory.getOrCreateTickState(tick) ?: return@atomic
                 tickState.bg = bg
                 dataRepository.insertOrUpdateTickState(tickState)
                 if (tick != lastAnchorTick) {
                     // TODO: Only start a recalculation if new BG value differs too much from predicted value
                     recalculate()
                 }
-                onDataUpdated()
             }
+            onDataUpdated()
         }
     }
 

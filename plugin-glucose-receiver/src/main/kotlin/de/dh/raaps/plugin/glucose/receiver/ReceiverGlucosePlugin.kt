@@ -64,7 +64,7 @@ class ReceiverGlucosePlugin(
      */
     fun injectReading(value: BgReading): Boolean {
         // tryEmit will always succeed because DROP_OLDEST ensures there is always room
-        Log.d(TAG, "Getting new glucose reading: $value")
+        Log.d(TAG, "New glucose reading: $value")
         return _readings.tryEmit(value)
     }
 

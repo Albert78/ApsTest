@@ -111,11 +111,19 @@ fun Flow<BgReading>.sampleByTickStable(
     }
 
     collect { bg ->
-        if (!initialized) {
+        if (!initialized && bg.timestamp.ms != 0L) {
             centerOn(bg.timestamp)
         }
 
         val tick = Tick(((bg.timestamp.ms + offsetMs) / tickIntervalMs).toInt())
+
+        // Sanity check
+        val lTick = lastTick
+        if (lTick != null && lTick >= tick) {
+            // Skip old value
+            return@collect
+        }
+
         val slotCenter = Timestamp(tick.value * tickIntervalMs + tickIntervalMs / 2 - offsetMs)
         val error = bg.timestamp - slotCenter
 
@@ -124,10 +132,8 @@ fun Flow<BgReading>.sampleByTickStable(
             errors.removeFirst()
         }
 
-        if (lastTick != tick) {
-            emit(Pair(bg, tick))
-            lastTick = tick
-        }
+        emit(Pair(bg, tick))
+        lastTick = tick
 
         if (errors.size == errorWindowSize) {
             val avgError = errors.sum() / errors.size
@@ -158,6 +164,7 @@ fun Flow<Pair<BgReading, Tick>>.fillGaps(tickInterval: Minutes): Flow<Pair<BgRea
                     timestamp = gapTimestamp
                 )
                 emit(invalidReading to Tick(gapTick))
+                lastTickValue = currentTickValue
             }
         }
 

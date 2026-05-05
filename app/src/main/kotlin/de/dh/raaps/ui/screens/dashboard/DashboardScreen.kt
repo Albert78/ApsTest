@@ -34,7 +34,6 @@ import androidx.compose.ui.unit.dp
 import de.dh.raaps.R
 import de.dh.raaps.ui.composables.WarningBanner
 import de.dh.raaps.ui.composables.screenTitle
-import de.dh.raaps.ui.controls.history.BgHistoryChart
 import de.dh.raaps.ui.controls.history.BgHistoryChartOrDefault
 import de.dh.raaps.ui.controls.history.CurrentBgUiState
 import de.dh.raaps.ui.controls.history.CurrentBgView
@@ -172,11 +171,14 @@ fun DashboardContent(
                             modifier = Modifier.align(Alignment.Center)
                         )
                     } else {
-                        BgHistoryChartOrDefault(
-                            diagramData = DiagramData.fromTickStates(
+                        val diagramData = remember(historyUiState.historyTicks, historyUiState.tickInterval) {
+                            return@remember DiagramData.fromTickStates(
                                 historyUiState.historyTicks,
                                 historyUiState.tickInterval
-                            ),
+                            )
+                        }
+                        BgHistoryChartOrDefault(
+                            diagramData = diagramData,
                             onChartClick = onHistoryChartClick
                         )
                     }

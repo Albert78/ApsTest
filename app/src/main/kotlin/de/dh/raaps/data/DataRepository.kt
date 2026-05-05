@@ -19,27 +19,27 @@ import de.dh.raaps.model.ApsTickState
 class DataRepository(val database: AppDatabase) {
     suspend fun getOrCreateSensorTypeByName(name: String): SensorType {
         val dao = database.providerDao()
-        var res = dao.getSensorTypeByName(name)
-        if (res == null) {
-            res = SensorTypeEntity(
+        var entity = dao.getSensorTypeByName(name)
+        if (entity == null) {
+            entity = SensorTypeEntity(
                 name = name
             )
-            dao.insertSensorType(res)
+            dao.insertSensorType(entity)
         }
-        return res.toModel()
+        return entity.toModel()
     }
 
     suspend fun getOrCreateDataProviderByName(name: String, type: String): DataProvider {
         val dao = database.providerDao()
-        var res = dao.getDataProviderByName(name)
-        if (res == null) {
-            res = DataProviderEntity(
+        var entity = dao.getDataProviderByName(name)
+        if (entity == null) {
+            entity = DataProviderEntity(
                 name = name,
                 type = type
             )
-            dao.insertDataProvider(res)
+            dao.insertDataProvider(entity)
         }
-        return res.toModel()
+        return entity.toModel()
     }
 
     /**
@@ -47,6 +47,7 @@ class DataRepository(val database: AppDatabase) {
      */
     suspend fun insertDataProviderGlucoseReading(reading: BgReading, dataProvider: DataProvider, sourceSensor: SensorType) {
         database.providerDao().insertGlucoseReading(reading.toNewEntity(dataProvider.id, sourceSensor.id))
+        // We don't need to update the reading's ID because it is a disposable object
     }
 
     /**
@@ -57,8 +58,16 @@ class DataRepository(val database: AppDatabase) {
         return mockSimpleTherapyData()
     }
 
+    /**
+     * Inserts the given tick state into the DB, or updates it if it already exists.
+     * If the entity existed in the DB, this method will update the ID of the entity to the
+     * value in the DB.
+     */
     suspend fun insertOrUpdateTickState(tickState: ApsTickState) {
-        database.stateDao().insertOrUpdateTickState(tickState.toEntity())
+        val id = database.stateDao().insertOrUpdateTickState(tickState.toEntity())
+        if (id != -1L) {
+            tickState.id = id
+        }
     }
 
     suspend fun getTickStates(fromTick: Tick, toTick: Tick): List<ApsTickState> {

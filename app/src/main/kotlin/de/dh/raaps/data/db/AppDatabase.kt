@@ -26,7 +26,7 @@ interface ProviderDao {
     suspend fun getSensorTypeByName(name: String): SensorTypeEntity?
 
     @Insert
-    suspend fun insertSensorType(value: SensorTypeEntity)
+    suspend fun insertSensorType(value: SensorTypeEntity): Long
 
     @Query("SELECT * FROM data_provider ORDER BY name ASC")
     suspend fun getAllDataProviders(): List<DataProviderEntity>
@@ -35,13 +35,13 @@ interface ProviderDao {
     suspend fun getDataProviderByName(name: String): DataProviderEntity?
 
     @Insert
-    suspend fun insertDataProvider(value: DataProviderEntity)
+    suspend fun insertDataProvider(value: DataProviderEntity): Long
 
     @Query("SELECT * FROM glucose_reading where timestamp_ms > :timestampMs ORDER BY timestamp_ms ASC")
     suspend fun getReadingsFromTime(timestampMs: Long): List<GlucoseReadingEntity>
 
     @Insert
-    suspend fun insertGlucoseReading(reading: GlucoseReadingEntity)
+    suspend fun insertGlucoseReading(reading: GlucoseReadingEntity): Long
 }
 
 @Dao
@@ -51,8 +51,12 @@ interface TherapyDao {
 
 @Dao
 interface StateDao {
+    /**
+     * Inserts the given tick state into the DB, if it not yet exists. Else, the tick state in the
+     * DB will be updated. Returns the new or existing database ID of the entity.
+     */
     @Upsert
-    suspend fun insertOrUpdateTickState(tickState: TickStateEntity)
+    suspend fun insertOrUpdateTickState(tickState: TickStateEntity): Long
 
     @Query("SELECT * FROM tick_state WHERE tick >= :fromTick AND tick <= :toTick ORDER BY tick")
     suspend fun getTickStates(fromTick: Tick, toTick: Tick): List<TickStateEntity>

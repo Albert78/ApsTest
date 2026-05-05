@@ -1,6 +1,7 @@
 package de.dh.raaps.ui.controls.history
 
 import android.app.Application
+import android.util.Log
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
@@ -130,14 +131,22 @@ class HistoryViewModel(
 
         val timestampNowMs = Timestamp.now().ms
         val limitMs = timestampNowMs - 20 * 60 * 1000L
+
         val recentTicksWithBg = apsHistory.ticks.filterNotNull().filter {
             it.bg != null && it.bg!!.timestamp.ms >= limitMs
         }
-        val latest = recentTicksWithBg.lastOrNull()
+        // Prefer the absolute current value from the core, if it's fresh enough
+        val currentBg = aps.getCurrentBg()
+        val latest = if (currentBg != null && currentBg.timestamp.ms >= limitMs) {
+            currentBg
+        } else {
+            // Fallback to history if current core value is missing or too old
+            recentTicksWithBg.lastOrNull()?.bg
+        }
 
         _currentBgUiState.update {
             if (latest == null) {
-                val limit2HoursMs = 2 * 60 * 60 * 1000L
+                val limit2HoursMs = timestampNowMs - 2 * 60 * 60 * 1000L
                 val olderTickData = apsHistory.ticks
                     .map({ tickState -> Pair(tickState?.bg, tickState?.bg?.timestamp) })
                     .lastOrNull(
@@ -166,7 +175,7 @@ class HistoryViewModel(
                     )
                 }
             } else {
-                val bgValue = latest.bg!!.smoothedValue
+                val bgValue = latest.smoothedValue
 
                 // Calculate trend using linear regression over the points in the window
                 val n = recentTicksWithBg.size
@@ -211,13 +220,14 @@ class HistoryViewModel(
                         bgValue = bgValue,
                         delta = regressionDelta5m?.let { BgValue.fromMgDl(it.toInt()) },
                         trend = trend,
-                        timestamp = latest.bg!!.timestamp,
+                        timestamp = latest.timestamp,
                         glucoseUnit = glucoseUnit
                     )
                 )
             }
         }
 
+        Log.d(TAG, "Updating history data")
         _historyUiState.update {
             HistoryUiState(
                 isLoading = false,
