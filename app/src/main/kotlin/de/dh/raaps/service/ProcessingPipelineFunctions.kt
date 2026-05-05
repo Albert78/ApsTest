@@ -189,7 +189,7 @@ private fun isNValidValues(history: List<BgReading>, n: Int): Boolean {
 
 /**
  * Implementation of Parametrized Time-Weighted Moving Average.
- * If there aren't enough valid values in the given window, this method returns [null], else it
+ * If there aren't enough valid values in the given window, this method returns `null`, else it
  * returns the PTWMA-smoothed value.
  */
 private fun calculatePTWMA(

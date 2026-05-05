@@ -104,9 +104,7 @@ class ApsRollingHistory(
             }
         }
 
-        // Buffer places which are not filled with the given values are
-        // intentionally left null. This can happen when the app starts with a fresh database,
-        // for example.
+        // Slots not covered by the provided values are intentionally left null (e.g. with a fresh DB)
     }
 
     /**
@@ -133,7 +131,7 @@ class ApsRollingHistory(
     /**
      * Searches the history backward starting at [startTick] for the first [ApsTickState],
      * which meets the [predicate] condition.
-     * Returns [null] if there is no match in the current history window.
+     * Returns `null` if there is no match in the current history window.
      */
     fun findBackward(
         startTick: Tick = anchorTick,
