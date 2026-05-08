@@ -121,14 +121,14 @@ data class DiagramData(
             val tickSizeMs = tickInterval.value * 60 * 1000
 
             val timestamp = Timestamp.now()
-            val tickAtIndex0 = (timestamp.ms  / tickSizeMs).toInt()
+            val tickAtIndex0 = (timestamp.ms / tickSizeMs).toInt()
             return DiagramData(
                 tickStates = List(2) { null },
                 tickInterval = tickInterval,
                 validIndices = listOf(),
                 tickAtIndex0 = tickAtIndex0,
                 minX = 0,
-                maxX = 10
+                maxX = 4 * 60 / tickInterval.value // 4 hours
             )
         }
     }
@@ -149,7 +149,10 @@ fun BgHistoryChart(
     LaunchedEffect(diagramData) {
         modelProducer.runTransaction {
             if (diagramData.validIndices.isEmpty()) {
-                lineSeries { }
+                lineSeries {
+                    // Dummy series - invisible at y=0
+                    series(x = listOf(0.0, 1.0), y = listOf(0.0, 0.0))                    
+                }
             } else{
                 lineSeries {
                     series(
