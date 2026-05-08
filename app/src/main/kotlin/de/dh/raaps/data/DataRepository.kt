@@ -14,7 +14,7 @@ import de.dh.raaps.data.db.entities.SensorTypeEntity
 import de.dh.raaps.data.db.toEntity
 import de.dh.raaps.data.db.toModel
 import de.dh.raaps.data.db.toNewEntity
-import de.dh.raaps.model.ApsTickState
+import de.dh.raaps.model.TickState
 
 class DataRepository(val database: AppDatabase) {
     suspend fun getOrCreateSensorTypeByName(name: String): SensorType {
@@ -63,14 +63,14 @@ class DataRepository(val database: AppDatabase) {
      * If the entity existed in the DB, this method will update the ID of the entity to the
      * value in the DB.
      */
-    suspend fun insertOrUpdateTickState(tickState: ApsTickState) {
+    suspend fun insertOrUpdateTickState(tickState: TickState) {
         val id = database.stateDao().insertOrUpdateTickState(tickState.toEntity())
         if (id != -1L) {
             tickState.id = id
         }
     }
 
-    suspend fun getTickStates(fromTick: Tick, toTick: Tick): List<ApsTickState> {
+    suspend fun getTickStates(fromTick: Tick, toTick: Tick): List<TickState> {
         return database.stateDao().getTickStates(fromTick, toTick).toModel()
     }
 }

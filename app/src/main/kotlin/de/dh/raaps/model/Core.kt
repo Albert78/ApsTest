@@ -9,14 +9,14 @@ import de.dh.raaps.common.api.data.Minutes
 import de.dh.raaps.common.api.data.SensorType
 import de.dh.raaps.common.api.data.SmoothedBgSample
 import de.dh.raaps.data.DataRepository
-import de.dh.raaps.service.persist
-import de.dh.raaps.service.smoothGlucoseSmart_1_Minute_Readings
-import de.dh.raaps.service.smoothGlucoseSmart_5_Minute_Readings
+import de.dh.raaps.model.bgpipeline.persist
+import de.dh.raaps.model.bgpipeline.smoothGlucoseSmart_1_Minute_Readings
+import de.dh.raaps.model.bgpipeline.smoothGlucoseSmart_5_Minute_Readings
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 
-enum class APSCoreState {
+enum class CoreState {
     /**
      * The APS core was created but not initialized yet. No data have been loaded from the DB
      * and the calculation modules have not been connected yet.
@@ -57,7 +57,7 @@ enum class APSCoreState {
  * We only need to signal the internal calculation state by setting the [busyState] flag. The surrounding app
  * is responsible for acquiring a wake lock.
  */
-class APSCore(
+class Core(
     val dataRepository: DataRepository,
     private val onDataUpdated: () -> Unit,
     private val onCoreStateChanged: () -> Unit,
@@ -65,13 +65,13 @@ class APSCore(
     private val onReleaseBusyState: () -> Unit
 ) {
     // State
-    var rollingHistory: ApsRollingHistory = ApsRollingHistory(historyHours = 0, tickDuration = Minutes(5))
+    var rollingHistory: RollingHistory = RollingHistory(historyHours = 0, tickDuration = Minutes(5))
     var currentBg: SmoothedBgSample? = null
         private set
     var lastBg: SmoothedBgSample? = null
         private set
 
-    var coreState: APSCoreState = APSCoreState.Uninitialized
+    var coreState: CoreState = CoreState.Uninitialized
         private set
 
     /**
@@ -111,7 +111,7 @@ class APSCore(
         }
     }
 
-    private fun setCoreState(state: APSCoreState) {
+    private fun setCoreState(state: CoreState) {
         coreState = state
         onCoreStateChanged()
     }
@@ -119,10 +119,10 @@ class APSCore(
     suspend fun initialize() {
         atomic {
             Log.d(TAG, "Initializing...")
-            setCoreState(APSCoreState.Initializing)
+            setCoreState(CoreState.Initializing)
             rollingHistory = initializeRollingHistory(dataRepository)
 
-            fun bgPresentPredicate(): (ApsTickState) -> Boolean = { state ->
+            fun bgPresentPredicate(): (TickState) -> Boolean = { state ->
                 state.bg?.sampleKind != BgSampleKind.Invalid
             }
 
@@ -138,12 +138,12 @@ class APSCore(
             onDataUpdated()
 
             Log.d(TAG, "Finished initialization...")
-            setCoreState(APSCoreState.Idle)
+            setCoreState(CoreState.Idle)
         }
     }
 
     /**
-     * Installs the input Flow of BG values from the given plugin.
+     * Installs the input Flow of BG values from the given source plugin.
      */
     suspend fun installGlucosePipeline(
         plugin: GlucosePlugin,
@@ -201,8 +201,8 @@ class APSCore(
         Log.d(TAG, "Installed glucose pipeline")
     }
 
-    private suspend fun initializeRollingHistory(dataRepository: DataRepository): ApsRollingHistory {
-        val result = ApsRollingHistory(historyHours = 10, tickDuration = Minutes(5))
+    private suspend fun initializeRollingHistory(dataRepository: DataRepository): RollingHistory {
+        val result = RollingHistory(historyHours = 10, tickDuration = Minutes(5))
         val anchorTick = result.getNowTick()
         result.advanceTo(anchorTick)
         val tickStates = dataRepository.getTickStates(result.getFirstTick(), anchorTick)
@@ -250,6 +250,6 @@ class APSCore(
     }
 
     companion object {
-        val TAG = APSCore::class.simpleName
+        val TAG = Core::class.simpleName
     }
 }

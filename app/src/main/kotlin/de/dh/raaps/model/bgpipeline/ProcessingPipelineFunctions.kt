@@ -1,4 +1,4 @@
-package de.dh.raaps.service
+package de.dh.raaps.model.bgpipeline
 
 import android.util.Log
 import de.dh.raaps.common.api.DataProvider
@@ -12,7 +12,6 @@ import de.dh.raaps.common.api.data.Tick
 import de.dh.raaps.common.api.data.Timestamp
 import de.dh.raaps.common.api.data.smoothTo
 import de.dh.raaps.data.DataRepository
-import de.dh.raaps.model.SavitzkyGolayFilterWin5Order2
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.flow
@@ -164,7 +163,6 @@ fun Flow<Pair<BgReading, Tick>>.fillGaps(tickInterval: Minutes): Flow<Pair<BgRea
                     timestamp = gapTimestamp
                 )
                 emit(invalidReading to Tick(gapTick))
-                lastTickValue = currentTickValue
             }
         }
 
@@ -226,7 +224,6 @@ private fun calculateSavitzkyGolayEndBorder3(window: List<BgReading>): BgValue {
     // -> Border treatment for the filter: Center the coeffs at the last entry in the window
     // (at this time we need the smoothed value) and use the last window entry (the most current one)
     // for the last three coeffs. This border treatment seems to be a good compromise.
-    // TODO: Describe behavior of this border treatment
     val sum = window[window.size - 3].value.mgdl * coeffs[0] + // Center the coeffs at the 3rd value from behind
             window[window.size - 2].value.mgdl * coeffs[1] +
             window[window.size - 1].value.mgdl * (coeffs[2] + coeffs[3] + coeffs[4]) // Use the last entry for the right part of the filter coeffs

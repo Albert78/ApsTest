@@ -6,17 +6,17 @@ import de.dh.raaps.common.api.data.Tick
 import de.dh.raaps.common.api.data.Timestamp
 
 data class ApsHistorySnapshot(
-    val ticks: List<ApsTickState?>,
+    val ticks: List<TickState?>,
     val tickInterval: Minutes
 )
 
-class ApsRollingHistory(
+class RollingHistory(
     val historyHours: Int = 10,
     val tickDuration: Minutes = Minutes(5)
 ) {
     private val capacity = (historyHours * 60) / tickDuration.value.toInt()
     // Ring buffer which holds our history window
-    private val buffer = arrayOfNulls<ApsTickState>(capacity)
+    private val buffer = arrayOfNulls<TickState>(capacity)
 
     // The "Present": All data in the buffer is relative to this tick
     var anchorTick: Tick = Tick.invalid()
@@ -60,7 +60,7 @@ class ApsRollingHistory(
      * Tries to get an entry of our state history.
      * Only succeeds if the given tick falls within the current history window.
      */
-    fun getApsTickState(tick: Tick): ApsTickState? {
+    fun getApsTickState(tick: Tick): TickState? {
         val minValidTick = getFirstTick().value
 
         if (tick.value in minValidTick..anchorTick.value) {
@@ -69,14 +69,14 @@ class ApsRollingHistory(
         return null
     }
 
-    fun getOrCreateTickState(tick: Tick): ApsTickState? {
+    fun getOrCreateTickState(tick: Tick): TickState? {
         if (tick > anchorTick) {
             advanceTo(tick)
         }
         if (tick.value !in anchorTick.value - capacity + 1..anchorTick.value) {
             return null
         }
-        val result = ApsTickState.empty(tick)
+        val result = TickState.empty(tick)
         buffer[bufferIndex(tick)] = result
         return result
     }
@@ -85,7 +85,7 @@ class ApsRollingHistory(
         return tick.value % capacity
     }
 
-    fun replaceBufferTickStates(tickStates: List<ApsTickState>) {
+    fun replaceBufferTickStates(tickStates: List<TickState>) {
         // Clear buffer
         for (i in 0..<capacity) {
             buffer[i] = null
@@ -129,14 +129,14 @@ class ApsRollingHistory(
     }
 
     /**
-     * Searches the history backward starting at [startTick] for the first [ApsTickState],
+     * Searches the history backward starting at [startTick] for the first [TickState],
      * which meets the [predicate] condition.
      * Returns `null` if there is no match in the current history window.
      */
     fun findBackward(
         startTick: Tick = anchorTick,
-        predicate: (ApsTickState) -> Boolean
-    ): ApsTickState? {
+        predicate: (TickState) -> Boolean
+    ): TickState? {
         val minTick = getFirstTick().value
         val start = startTick.value.coerceAtMost(anchorTick.value)
 
@@ -150,6 +150,6 @@ class ApsRollingHistory(
     }
 
     companion object {
-        val TAG = ApsRollingHistory::class.simpleName
+        val TAG = RollingHistory::class.simpleName
     }
 }

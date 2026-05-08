@@ -14,9 +14,9 @@ import de.dh.raaps.common.api.data.GlucoseUnit
 import de.dh.raaps.common.api.data.Minutes
 import de.dh.raaps.common.api.data.Timestamp
 import de.dh.raaps.model.APS
-import de.dh.raaps.model.APSCoreState
 import de.dh.raaps.model.ApsHistorySnapshot
-import de.dh.raaps.model.ApsTickState
+import de.dh.raaps.model.CoreState
+import de.dh.raaps.model.TickState
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.first
@@ -84,7 +84,7 @@ data class CurrentBgUiState(
 data class HistoryUiState(
     val isLoading: Boolean,
     val isError: Boolean,
-    val historyTicks: List<ApsTickState?> = listOf(),
+    val historyTicks: List<TickState?> = listOf(),
     val tickInterval: Minutes = Minutes(5)
 )
 
@@ -106,7 +106,7 @@ class HistoryViewModel(
     init {
         viewModelScope.launch {
             // This will block the thread until the core is idle
-            aps.coreState.first { it == APSCoreState.Idle }
+            aps.coreState.first { it == CoreState.Idle }
             reload_suspend()
             aps.lastDataTime.collect {
                 reload_suspend()

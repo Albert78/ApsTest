@@ -8,7 +8,7 @@ import de.dh.raaps.data.db.entities.DataProviderEntity
 import de.dh.raaps.data.db.entities.GlucoseReadingEntity
 import de.dh.raaps.data.db.entities.SensorTypeEntity
 import de.dh.raaps.data.db.entities.TickStateEntity
-import de.dh.raaps.model.ApsTickState
+import de.dh.raaps.model.TickState
 
 fun BgReading.toNewEntity(dataProviderId: Long, sourceSensorId: Long) = GlucoseReadingEntity(
     value_mgdl = this.value.mgdl,
@@ -40,7 +40,7 @@ fun DataProviderEntity.toModel() = DataProvider(
     type = this.type
 )
 
-fun ApsTickState.toEntity() = TickStateEntity(
+fun TickState.toEntity() = TickStateEntity(
     id = this.id,
     tick = this.tick,
     orig_bg_value = this.bg?.origValue,
@@ -49,7 +49,7 @@ fun ApsTickState.toEntity() = TickStateEntity(
     bg_readig_timestamp = this.bg?.timestamp
 )
 
-fun TickStateEntity.toModel(): ApsTickState {
+fun TickStateEntity.toModel(): TickState {
     val origValue = this.orig_bg_value
     val smoothedValue = this.smoothed_bg_value
     val sampleKind = this.bg_sample_kind
@@ -62,17 +62,17 @@ fun TickStateEntity.toModel(): ApsTickState {
             timestamp
         )
     else null
-    return ApsTickState(
+    return TickState(
         id = this.id,
         tick = this.tick,
         bg = bg
     )
 }
 
-fun List<TickStateEntity>.toModel(): List<ApsTickState> {
+fun List<TickStateEntity>.toModel(): List<TickState> {
     return List(this.size, { index -> this[index].toModel() })
 }
 
-fun List<ApsTickState>.toEntity(): List<TickStateEntity> {
+fun List<TickState>.toEntity(): List<TickStateEntity> {
     return List(this.size, { index -> this[index].toEntity() })
 }

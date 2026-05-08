@@ -40,7 +40,7 @@ class APS(
     private val wakeLock = powerManager.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, "raaps:ApsCoreLock")
 
     // Computation Core: Pure logic and state, completely thread-agnostic
-    private val core: APSCore = APSCore(
+    private val core: Core = Core(
         dataRepository = dataRepository,
         onDataUpdated = { emitDataUpdateEvent() },
         onCoreStateChanged = { emitCoreStateChangedEvent() },
@@ -67,14 +67,14 @@ class APS(
             // TODO: restart calculation or subscription for pump
         }
 
-    val rollingHistory: ApsRollingHistory get() = core.rollingHistory
+    val rollingHistory: RollingHistory get() = core.rollingHistory
 
     // Observers: Exposed from the internal core
     // Observers (Updated by the core, read by the facade/UI)
     private val _lastDataTime = MutableStateFlow<Timestamp>(Timestamp(0))
     val lastDataTime: StateFlow<Timestamp> = _lastDataTime.asStateFlow()
 
-    private val _coreState = MutableStateFlow(APSCoreState.Initializing)
+    private val _coreState = MutableStateFlow(CoreState.Initializing)
     /**
      * State of the core.
      * Watch the core state to be notified when it changes, e.g.:
@@ -82,7 +82,7 @@ class APS(
      * aps.coreState.first { it == APSCoreState.Idle }
      * ```
      */
-    val coreState: StateFlow<APSCoreState> = _coreState.asStateFlow()
+    val coreState: StateFlow<CoreState> = _coreState.asStateFlow()
 
     /**
      * Executes the given block on the internal APS thread.

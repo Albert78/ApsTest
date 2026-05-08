@@ -1,4 +1,4 @@
-package de.dh.raaps.model
+package de.dh.raaps.model.bgpipeline
 
 class SavitzkyGolayFilterWin5Order2 {
     companion object {
