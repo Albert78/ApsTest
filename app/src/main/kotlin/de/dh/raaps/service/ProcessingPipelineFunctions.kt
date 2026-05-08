@@ -1,16 +1,16 @@
 package de.dh.raaps.service
 
 import android.util.Log
-import de.dh.raaps.core.api.DataProvider
-import de.dh.raaps.core.api.data.BgReading
-import de.dh.raaps.core.api.data.BgSampleKind
-import de.dh.raaps.core.api.data.BgValue
-import de.dh.raaps.core.api.data.Minutes
-import de.dh.raaps.core.api.data.SensorType
-import de.dh.raaps.core.api.data.SmoothedBgSample
-import de.dh.raaps.core.api.data.Tick
-import de.dh.raaps.core.api.data.Timestamp
-import de.dh.raaps.core.api.data.smoothTo
+import de.dh.raaps.common.api.DataProvider
+import de.dh.raaps.common.api.data.BgReading
+import de.dh.raaps.common.api.data.BgSampleKind
+import de.dh.raaps.common.api.data.BgValue
+import de.dh.raaps.common.api.data.Minutes
+import de.dh.raaps.common.api.data.SensorType
+import de.dh.raaps.common.api.data.SmoothedBgSample
+import de.dh.raaps.common.api.data.Tick
+import de.dh.raaps.common.api.data.Timestamp
+import de.dh.raaps.common.api.data.smoothTo
 import de.dh.raaps.data.DataRepository
 import de.dh.raaps.model.SavitzkyGolayFilterWin5Order2
 import kotlinx.coroutines.flow.Flow

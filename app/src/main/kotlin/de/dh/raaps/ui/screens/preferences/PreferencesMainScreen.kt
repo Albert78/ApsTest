@@ -40,13 +40,13 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import de.dh.raaps.R
-import de.dh.raaps.ui.common.ThemeMode
-import de.dh.raaps.ui.composables.DialogDismissButton
-import de.dh.raaps.ui.composables.DialogSurface
-import de.dh.raaps.ui.composables.DialogTitle
-import de.dh.raaps.ui.composables.screenTitle
-import de.dh.raaps.ui.screens.common.Icon_Screen_Back
-import de.dh.raaps.ui.theme.AppTheme
+import de.dh.raaps.common.ui.ThemeMode
+import de.dh.raaps.common.ui.composables.DialogDismissButton
+import de.dh.raaps.common.ui.composables.DialogSurface
+import de.dh.raaps.common.ui.composables.DialogTitle
+import de.dh.raaps.common.ui.composables.screenTitle
+import de.dh.raaps.common.ui.icons.Icon_Screen_Back
+import de.dh.raaps.common.ui.theme.AppTheme
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -84,7 +84,7 @@ fun PreferencesContent(
                     IconButton(onClick = onNavigateUp) {
                         Icon(
                             imageVector = Icon_Screen_Back,
-                            contentDescription = stringResource(R.string.cd_navigate_up)
+                            contentDescription = stringResource(de.dh.raaps.common.R.string.cd_navigate_up)
                         )
                     }
                 },

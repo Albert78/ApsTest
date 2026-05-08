@@ -1,13 +1,13 @@
 package de.dh.raaps.model
 
 import android.util.Log
-import de.dh.raaps.core.api.DataProvider
-import de.dh.raaps.core.api.GlucosePlugin
-import de.dh.raaps.core.api.data.BgReadingsInterval
-import de.dh.raaps.core.api.data.BgSampleKind
-import de.dh.raaps.core.api.data.Minutes
-import de.dh.raaps.core.api.data.SensorType
-import de.dh.raaps.core.api.data.SmoothedBgSample
+import de.dh.raaps.common.api.DataProvider
+import de.dh.raaps.common.api.GlucosePlugin
+import de.dh.raaps.common.api.data.BgReadingsInterval
+import de.dh.raaps.common.api.data.BgSampleKind
+import de.dh.raaps.common.api.data.Minutes
+import de.dh.raaps.common.api.data.SensorType
+import de.dh.raaps.common.api.data.SmoothedBgSample
 import de.dh.raaps.data.DataRepository
 import de.dh.raaps.service.persist
 import de.dh.raaps.service.smoothGlucoseSmart_1_Minute_Readings

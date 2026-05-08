@@ -3,7 +3,7 @@ package de.dh.raaps.ui.screens.permissions
 import android.content.Context
 import android.content.res.Resources
 import de.dh.raaps.R
-import de.dh.raaps.ui.screens.common.DisplayTextUtils
+import de.dh.raaps.common.ui.DisplayTextUtils
 
 sealed class PermissionStatus {
     /**
@@ -123,4 +123,3 @@ data class PermissionsUiModel(
         }
     }
 }
-

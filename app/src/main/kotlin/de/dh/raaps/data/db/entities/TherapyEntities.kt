@@ -2,7 +2,7 @@ package de.dh.raaps.data.db.entities
 
 import androidx.room.Entity
 import androidx.room.PrimaryKey
-import de.dh.raaps.core.api.ID_UNDEFINED
+import de.dh.raaps.common.api.ID_UNDEFINED
 
 /**
  * Contains the actual therapy data which can be used to calculate our APS.
@@ -20,4 +20,3 @@ data class TherapyDataEntity(
     val ic_blocks: List<DBBlock>,
     val target_blocks: List<DBTargetBlock>
 )
-

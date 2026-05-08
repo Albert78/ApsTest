@@ -1,0 +1,24 @@
+<resources>
+    <string name="short_date_time_format">dd.LL.yyyy, HH:mm</string>
+    <string name="short_date_format">dd.LL.yyyy</string>
+    <string name="long_date_format">EE, dd. MMMM yyyy</string>
+    <string name="long_date_time_format">EE, dd. MMMM yyyy, HH:mm</string>
+
+    <string name="time_ago_just_now">jetzt</string>
+    <string name="time_ago_seconds_ago">vor %1$d Sek</string>
+    <string name="time_ago_minutes_ago">vor %1$d Min</string>
+    <string name="time_ago_hours_ago">vor %1$d Std</string>
+
+    <string name="cd_cancel">Abbrechen</string>
+    <string name="cd_navigate_up">Zurück</string>
+    <string name="cd_close">Schließen</string>
+    <string name="cd_more_options">Überlaufmenü - mehr Optionen anzeigen</string>
+    <string name="cd_clear_selection">Selektion aufheben</string>
+    <string name="cd_delete_selected_items">Selektierte Einträge löschen</string>
+    <string name="action_delete">Löschen</string>
+    <string name="selection_mode_num_items_selected">%d ausgewählt</string>
+
+    <string name="theme_system">Systemstandard</string>
+    <string name="theme_light">Hell</string>
+    <string name="theme_dark">Dunkel</string>
+</resources>

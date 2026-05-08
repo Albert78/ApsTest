@@ -3,11 +3,11 @@ package de.dh.raaps.plugin.glucose.receiver
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
-import de.dh.raaps.core.api.data.BgReading
-import de.dh.raaps.core.api.data.BgSampleKind
-import de.dh.raaps.core.api.data.BgValue
-import de.dh.raaps.core.api.data.RawBg
-import de.dh.raaps.core.api.data.Timestamp
+import de.dh.raaps.common.api.data.BgReading
+import de.dh.raaps.common.api.data.BgSampleKind
+import de.dh.raaps.common.api.data.BgValue
+import de.dh.raaps.common.api.data.RawBg
+import de.dh.raaps.common.api.data.Timestamp
 import kotlin.math.round
 import kotlin.time.Duration.Companion.days
 

@@ -1,20 +1,6 @@
 <resources>
     <string name="app_name">RAAPS</string>
 
-    <string name="short_date_time_format">dd.LL.yyyy, HH:mm</string>
-    <string name="short_date_format">dd.LL.yyyy</string>
-    <string name="long_date_format">EE, dd. MMMM yyyy</string>
-    <string name="long_date_time_format">EE, dd. MMMM yyyy, HH:mm</string>
-
-    <string name="cd_cancel">Abbrechen</string>
-    <string name="cd_navigate_up">Zurück</string>
-    <string name="cd_close">Schließen</string>
-    <string name="cd_more_options">Überlaufmenü - mehr Optionen anzeigen</string>
-    <string name="cd_clear_selection">Selektion aufheben</string>
-    <string name="cd_delete_selected_items">Selektierte Einträge löschen</string>
-    <string name="action_delete">Löschen</string>
-    <string name="selection_mode_num_items_selected">%d ausgewählt</string>
-
     <string name="dashboard_screen_title">RAAPS</string>
     <string name="menu_item_permissions_label">App-Berechtigungen</string>
     <string name="menu_item_preferences_label">Einstellungen</string>
@@ -59,16 +45,7 @@
     <string name="pref_theme_title">Design</string>
     <string name="pref_theme_dialog_title">Design wählen</string>
 
-    <string name="pref_theme_entry_system">Systemstandard</string>
-    <string name="pref_theme_entry_light">Hell</string>
-    <string name="pref_theme_entry_dark">Dunkel</string>
-
     <string name="aps_service_notification_channel_name">RAAPS Service</string>
     <string name="aps_service_notification_content_no_value_yet">Kein Glukosewert</string>
 
-    <string name="history_screen_title">Status</string>
-    <string name="time_ago_just_now">jetzt</string>
-    <string name="time_ago_seconds_ago">vor %1$d Sek</string>
-    <string name="time_ago_minutes_ago">vor %1$d Min</string>
-    <string name="time_ago_hours_ago">vor %1$d Std</string>
 </resources>

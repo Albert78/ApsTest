@@ -35,13 +35,13 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import de.dh.raaps.R
-import de.dh.raaps.ui.composables.contentScrollIndicator
-import de.dh.raaps.ui.composables.screenTitle
-import de.dh.raaps.ui.screens.common.Icon_Check_No
-import de.dh.raaps.ui.screens.common.Icon_Check_Yes
-import de.dh.raaps.ui.screens.common.Icon_Info
-import de.dh.raaps.ui.screens.common.Icon_Screen_Back
-import de.dh.raaps.ui.theme.AppTheme
+import de.dh.raaps.common.ui.composables.contentScrollIndicator
+import de.dh.raaps.common.ui.composables.screenTitle
+import de.dh.raaps.common.ui.icons.Icon_Check_No
+import de.dh.raaps.common.ui.icons.Icon_Check_Yes
+import de.dh.raaps.common.ui.icons.Icon_Info
+import de.dh.raaps.common.ui.icons.Icon_Screen_Back
+import de.dh.raaps.common.ui.theme.AppTheme
 
 @Composable
 fun PermissionsScreen(
@@ -88,7 +88,7 @@ fun PermissionsScreenContent(
                     IconButton(onClick = onNavigateUp) {
                         Icon(
                             imageVector = Icon_Screen_Back,
-                            contentDescription = stringResource(R.string.cd_navigate_up)
+                            contentDescription = stringResource(de.dh.raaps.common.R.string.cd_navigate_up)
                         )
                     }
                 },

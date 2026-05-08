@@ -1,8 +1,8 @@
 package de.dh.raaps.model
 
-import de.dh.raaps.core.api.ID_UNDEFINED
-import de.dh.raaps.core.api.data.SmoothedBgSample
-import de.dh.raaps.core.api.data.Tick
+import de.dh.raaps.common.api.ID_UNDEFINED
+import de.dh.raaps.common.api.data.SmoothedBgSample
+import de.dh.raaps.common.api.data.Tick
 
 /**
  * Contains the APS data contained at a discrete time tick in the APS rolling history window.

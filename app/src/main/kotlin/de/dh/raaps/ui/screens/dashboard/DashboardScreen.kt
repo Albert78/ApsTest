@@ -32,8 +32,8 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import de.dh.raaps.R
-import de.dh.raaps.ui.composables.WarningBanner
-import de.dh.raaps.ui.composables.screenTitle
+import de.dh.raaps.common.ui.composables.WarningBanner
+import de.dh.raaps.common.ui.composables.screenTitle
 import de.dh.raaps.ui.controls.history.BgHistoryChartOrDefault
 import de.dh.raaps.ui.controls.history.CurrentBgUiState
 import de.dh.raaps.ui.controls.history.CurrentBgView
@@ -45,7 +45,7 @@ import de.dh.raaps.ui.screens.history.createSampleHistoryUiState
 import de.dh.raaps.ui.screens.permissions.PermissionStatus
 import de.dh.raaps.ui.screens.permissions.PermissionsUiModel
 import de.dh.raaps.ui.screens.permissions.PermissionsViewModel
-import de.dh.raaps.ui.theme.AppTheme
+import de.dh.raaps.common.ui.theme.AppTheme
 
 @Composable
 fun DashboardScreen(
@@ -97,7 +97,7 @@ fun DashboardContent(
                 actions = {
                     Box {
                         IconButton(onClick = { menuExpanded = true }) {
-                            Icon(imageVector = Icons.Default.MoreVert, contentDescription = stringResource(id = R.string.cd_more_options))
+                            Icon(imageVector = Icons.Default.MoreVert, contentDescription = stringResource(id = de.dh.raaps.common.R.string.cd_more_options))
                         }
                         DropdownMenu(
                             expanded = menuExpanded,

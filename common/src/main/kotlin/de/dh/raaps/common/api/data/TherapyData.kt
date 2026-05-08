@@ -1,0 +1,11 @@
+package de.dh.raaps.common.api.data
+
+import de.dh.raaps.common.api.ID_UNDEFINED
+
+data class TherapyData(
+    val id: Long = ID_UNDEFINED,
+    val basalBlocks: List<Block>,
+    val isfBlocks: List<Block>,
+    val icBlocks: List<Block>,
+    val targetBlocks: List<TargetBlock>
+)

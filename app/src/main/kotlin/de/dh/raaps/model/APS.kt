@@ -2,10 +2,10 @@ package de.dh.raaps.model
 
 import android.content.Context
 import android.os.PowerManager
-import de.dh.raaps.core.api.GlucosePlugin
-import de.dh.raaps.core.api.PumpPlugin
-import de.dh.raaps.core.api.data.SmoothedBgSample
-import de.dh.raaps.core.api.data.Timestamp
+import de.dh.raaps.common.api.GlucosePlugin
+import de.dh.raaps.common.api.PumpPlugin
+import de.dh.raaps.common.api.data.SmoothedBgSample
+import de.dh.raaps.common.api.data.Timestamp
 import de.dh.raaps.data.DataRepository
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers

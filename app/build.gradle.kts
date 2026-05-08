@@ -43,7 +43,7 @@ android {
 }
 
 dependencies {
-    implementation(project(":core-api"))
+    implementation(project(":common"))
     implementation(project(":plugin-cgm-sample"))
     implementation(project(":plugin-glucose-receiver"))
     implementation(project(":plugin-pump-sample"))
@@ -59,13 +59,12 @@ dependencies {
     implementation(libs.androidx.navigation3.runtime)
     implementation(libs.androidx.lifecycle.viewmodel.navigation3)
     implementation(libs.androidx.material3.adaptive.navigation3)
-    implementation(libs.androidx.compose.material.icons.extended)
 
+    implementation(platform(libs.androidx.compose.bom))
+    implementation(libs.androidx.compose.material.icons.extended)
     implementation(libs.androidx.compose.material3)
     implementation(libs.androidx.compose.material.icons.extended)
-
     implementation(libs.androidx.activity.compose)
-    implementation(platform(libs.androidx.compose.bom))
     implementation(libs.androidx.compose.ui)
     implementation(libs.androidx.compose.ui.graphics)
     implementation(libs.androidx.compose.ui.tooling.preview)

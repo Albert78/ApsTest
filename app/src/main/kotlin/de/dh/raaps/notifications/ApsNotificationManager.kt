@@ -10,9 +10,9 @@ import android.util.Log
 import androidx.core.app.NotificationCompat
 import androidx.core.content.getSystemService
 import de.dh.raaps.R
-import de.dh.raaps.core.api.ToDo
-import de.dh.raaps.core.api.data.BgValue
-import de.dh.raaps.core.api.data.SmoothedBgSample
+import de.dh.raaps.common.api.ToDo
+import de.dh.raaps.common.api.data.BgValue
+import de.dh.raaps.common.api.data.SmoothedBgSample
 import de.dh.raaps.ui.screens.common.MainActivity
 import de.dh.raaps.ui.screens.permissions.canPostNotifications
 import java.util.Locale

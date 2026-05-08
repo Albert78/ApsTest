@@ -1,13 +1,13 @@
 package de.dh.raaps.plugin.glucose
 
-import de.dh.raaps.core.api.GlucosePlugin
-import de.dh.raaps.core.api.data.BgReading
-import de.dh.raaps.core.api.data.BgReadingsInterval
-import de.dh.raaps.core.api.data.BgSampleKind
-import de.dh.raaps.core.api.data.BgValue
-import de.dh.raaps.core.api.data.Minutes
-import de.dh.raaps.core.api.data.RawBg
-import de.dh.raaps.core.api.data.Timestamp
+import de.dh.raaps.common.api.GlucosePlugin
+import de.dh.raaps.common.api.data.BgReading
+import de.dh.raaps.common.api.data.BgReadingsInterval
+import de.dh.raaps.common.api.data.BgSampleKind
+import de.dh.raaps.common.api.data.BgValue
+import de.dh.raaps.common.api.data.Minutes
+import de.dh.raaps.common.api.data.RawBg
+import de.dh.raaps.common.api.data.Timestamp
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow

@@ -6,8 +6,8 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import de.dh.raaps.AppStateRepository
 import de.dh.raaps.MainApplication
+import de.dh.raaps.common.ui.ThemeMode
 import de.dh.raaps.themeMode
-import de.dh.raaps.ui.common.ThemeMode
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
