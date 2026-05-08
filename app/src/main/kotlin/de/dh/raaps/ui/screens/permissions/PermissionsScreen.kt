@@ -118,14 +118,14 @@ fun PermissionsScreenContent(
                     Text(
                         text = uiModel.permissionsMissingText,
                         style = MaterialTheme.typography.bodyLarge,
-                        color = colorResource(id = R.color.permission_granted_color),
+                        color = colorResource(id = de.dh.raaps.common.R.color.permission_granted_color),
                         modifier = Modifier.padding(16.dp)
                     )
                 } else {
                     Text(
                         text = uiModel.permissionsMissingText,
                         style = MaterialTheme.typography.bodyLarge,
-                        color = colorResource(id = R.color.permission_not_granted_color),
+                        color = colorResource(id = de.dh.raaps.common.R.color.permission_not_granted_color),
                         modifier = Modifier.padding(16.dp)
                     )
                 }
@@ -212,7 +212,7 @@ fun PermissionItem(
             is PermissionStatus.Granted -> {
                 Icon(
                     imageVector = Icon_Check_Yes,
-                    tint = colorResource(R.color.permission_granted_color),
+                    tint = colorResource(de.dh.raaps.common.R.color.permission_granted_color),
                     contentDescription = stringResource(R.string.cd_permission_granted),
                     modifier = Modifier
                         .size(50.dp)
@@ -224,14 +224,14 @@ fun PermissionItem(
                     Text(
                         text = grantedText,
                         style = MaterialTheme.typography.bodyMedium,
-                        color = colorResource(R.color.permission_granted_color)
+                        color = colorResource(de.dh.raaps.common.R.color.permission_granted_color)
                     )
                 }
             }
             is PermissionStatus.Denied -> {
                 Icon(
                     imageVector = Icon_Check_No,
-                    tint = colorResource(R.color.permission_not_granted_color),
+                    tint = colorResource(de.dh.raaps.common.R.color.permission_not_granted_color),
                     contentDescription = stringResource(R.string.cd_permission_not_granted),
                     modifier = Modifier
                         .size(50.dp)
@@ -243,7 +243,7 @@ fun PermissionItem(
                     Text(
                         text = notGrantedText,
                         style = MaterialTheme.typography.bodyMedium,
-                        color = colorResource(R.color.permission_not_granted_color)
+                        color = colorResource(de.dh.raaps.common.R.color.permission_not_granted_color)
                     )
                 }
             }
