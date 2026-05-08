@@ -24,7 +24,7 @@ dependencyResolutionManagement {
 
 rootProject.name = "APSTest"
 include(":app")
-include(":core-api")
+include(":common")
 include(":plugin-pump-sample")
 include(":plugin-cgm-sample")
 include(":plugin-glucose-receiver")

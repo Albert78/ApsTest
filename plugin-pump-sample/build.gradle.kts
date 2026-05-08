@@ -12,6 +12,6 @@ android {
 }
 
 dependencies {
-    implementation(project(":core-api"))
+    implementation(project(":common"))
     implementation(libs.androidx.core.ktx)
 }
