@@ -19,8 +19,7 @@ data class TickStateEntity(
     @PrimaryKey(autoGenerate = true)
     val id: Long = ID_UNDEFINED,
     val tick: Tick,
-    val orig_bg_value: BgValue?,
-    val smoothed_bg_value: BgValue?,
+    val bg_value: BgValue?,
     val bg_sample_kind: BgSampleKind?,
     val bg_readig_timestamp: Timestamp?
 )

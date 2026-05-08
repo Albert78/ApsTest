@@ -4,7 +4,7 @@ import android.content.Context
 import android.os.PowerManager
 import de.dh.raaps.common.api.GlucosePlugin
 import de.dh.raaps.common.api.PumpPlugin
-import de.dh.raaps.common.api.data.SmoothedBgSample
+import de.dh.raaps.common.api.data.BgReading
 import de.dh.raaps.common.api.data.Timestamp
 import de.dh.raaps.data.DataRepository
 import kotlinx.coroutines.CoroutineScope
@@ -162,7 +162,7 @@ class APS(
      * Entry point for external BG updates.
      * Guaranteed to run on the internal APS thread.
      */
-    fun updateBg(bg: SmoothedBgSample) = inAPSThread {
+    fun updateBg(bg: BgReading) = inAPSThread {
         core.updateBg(bg)
     }
 
@@ -182,11 +182,11 @@ class APS(
         apsDispatcher.close()
     }
 
-    fun getCurrentBg(): SmoothedBgSample? {
+    fun getCurrentBg(): BgReading? {
         return core.currentBg
     }
 
-    fun getLastBg(): SmoothedBgSample? {
+    fun getLastBg(): BgReading? {
         return core.lastBg
     }
 }

@@ -11,8 +11,8 @@ import androidx.core.app.NotificationCompat
 import androidx.core.content.getSystemService
 import de.dh.raaps.R
 import de.dh.raaps.common.api.ToDo
+import de.dh.raaps.common.api.data.BgReading
 import de.dh.raaps.common.api.data.BgValue
-import de.dh.raaps.common.api.data.SmoothedBgSample
 import de.dh.raaps.ui.screens.common.MainActivity
 import de.dh.raaps.ui.screens.permissions.canPostNotifications
 import java.util.Locale
@@ -31,11 +31,6 @@ class ApsNotificationManager(
         notificationManager.createNotificationChannel(channel)
     }
 
-    fun getBgValueSmoothedString(sample: SmoothedBgSample?): String? {
-        if (sample == null) return null
-        return "${sample.origValue.mgdl} -> ${sample.smoothedValue.mgdl} mg/dl"
-    }
-
     fun getBgValueString(sample: BgValue?, forceSign: Boolean): String? {
         if (sample == null) return null
         return if (forceSign) {
@@ -45,21 +40,17 @@ class ApsNotificationManager(
         }
     }
 
+    fun getBgDeltaString(delta: BgValue?): String? {
+        val bgDeltaStr = getBgValueString(delta, true)
+        return if (bgDeltaStr == null) null else "Δ$bgDeltaStr mg/dl"
+    }
+
     fun createForegroundServiceNotification(data: ApsNotificationData): Notification {
         Log.d(TAG, "Build notification for ${data.lastBgSample}")
         ToDo.toBeImplemented("Take glucose unit from preferences")
-        val bgValueStr = getBgValueString(data.lastBgSample?.origValue, false);
-        val title = if (bgValueStr == null) {
-            context.getString(R.string.aps_service_notification_content_no_value_yet)
-        } else {
-            var ret = bgValueStr
-            val bgDeltaStr = getBgValueString(data.getBgDelta(), true)
-            if (bgDeltaStr != null) {
-                ret = "$ret (Δ$bgDeltaStr) mg/dl"
-            }
-            ret
-        }
-        val details = getBgValueSmoothedString(data.lastBgSample)
+        val bgValueStr = getBgValueString(data.lastBgSample?.value, false);
+        val title = bgValueStr ?: context.getString(R.string.aps_service_notification_content_no_value_yet)
+        val details = getBgDeltaString(data.getBgDelta())
 
         val dashboardIntent = MainActivity.createStartDashboardIntent(context)
         val goToEventPendingIntent = PendingIntent.getActivity(

@@ -3,7 +3,6 @@ package de.dh.raaps.data.db
 import de.dh.raaps.common.api.DataProvider
 import de.dh.raaps.common.api.data.BgReading
 import de.dh.raaps.common.api.data.SensorType
-import de.dh.raaps.common.api.data.SmoothedBgSample
 import de.dh.raaps.data.db.entities.DataProviderEntity
 import de.dh.raaps.data.db.entities.GlucoseReadingEntity
 import de.dh.raaps.data.db.entities.SensorTypeEntity
@@ -43,21 +42,18 @@ fun DataProviderEntity.toModel() = DataProvider(
 fun TickState.toEntity() = TickStateEntity(
     id = this.id,
     tick = this.tick,
-    orig_bg_value = this.bg?.origValue,
-    smoothed_bg_value = this.bg?.smoothedValue,
+    bg_value = this.bg?.value,
     bg_sample_kind = this.bg?.sampleKind,
     bg_readig_timestamp = this.bg?.timestamp
 )
 
 fun TickStateEntity.toModel(): TickState {
-    val origValue = this.orig_bg_value
-    val smoothedValue = this.smoothed_bg_value
+    val bgValue = this.bg_value
     val sampleKind = this.bg_sample_kind
     val timestamp = this.bg_readig_timestamp
-    val bg = if (origValue != null && smoothedValue != null && sampleKind != null && timestamp != null)
-        SmoothedBgSample(
-            origValue,
-            smoothedValue,
+    val bg = if (bgValue != null && sampleKind != null && timestamp != null)
+        BgReading(
+            bgValue,
             sampleKind,
             timestamp
         )

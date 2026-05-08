@@ -169,13 +169,13 @@ class HistoryViewModel(
                         isLoading = false,
                         isError = false,
                         currentBgValue = CurrentBgData.oldValue(
-                            bgValue = bg.origValue,
+                            bgValue = bg.value,
                             timestamp = timestamp
                         )
                     )
                 }
             } else {
-                val bgValue = latest.smoothedValue
+                val bgValue = latest.value
 
                 // Calculate trend using linear regression over the points in the window
                 val n = recentTicksWithBg.size
@@ -187,7 +187,7 @@ class HistoryViewModel(
                     var sumXX = 0.0
                     recentTicksWithBg.forEach { tick ->
                         val x = (tick.bg!!.timestamp.ms - firstTs) / 60000.0
-                        val y = tick.bg!!.smoothedValue.mgdl.toDouble()
+                        val y = tick.bg!!.value.mgdl.toDouble()
                         sumX += x
                         sumY += y
                         sumXY += x * y

@@ -1,13 +1,13 @@
 package de.dh.raaps.notifications
 
+import de.dh.raaps.common.api.data.BgReading
 import de.dh.raaps.common.api.data.BgSampleKind
 import de.dh.raaps.common.api.data.BgValue
-import de.dh.raaps.common.api.data.SmoothedBgSample
 import de.dh.raaps.model.APS
 
 data class ApsNotificationData(
-    val lastBgSample: SmoothedBgSample?,
-    val secondToLastBgSample: SmoothedBgSample?
+    val lastBgSample: BgReading?,
+    val secondToLastBgSample: BgReading?
 ) {
     fun getBgDelta(): BgValue? {
         if (lastBgSample == null || lastBgSample.sampleKind != BgSampleKind.Value
@@ -15,7 +15,7 @@ data class ApsNotificationData(
         ) {
             return null
         }
-        return BgValue.fromMgDl(lastBgSample.origValue.mgdl - secondToLastBgSample.origValue.mgdl)
+        return BgValue.fromMgDl(lastBgSample.value.mgdl - secondToLastBgSample.value.mgdl)
     }
 
     companion object {

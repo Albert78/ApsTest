@@ -52,7 +52,7 @@ class MainApplication : Application() {
 
         // TODO: Read plugins from preferences
         aps.pumpPlugin = SamplePumpPlugin()
-        aps.glucosePlugin = ReceiverGlucosePlugin(this, ExternalSourceType.xDrip1Min)
+        aps.glucosePlugin = ReceiverGlucosePlugin(this, ExternalSourceType.xDrip5Min)
 
         installNotificationUpdater()
     }

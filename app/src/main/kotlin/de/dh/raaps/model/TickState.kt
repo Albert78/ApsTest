@@ -1,7 +1,7 @@
 package de.dh.raaps.model
 
 import de.dh.raaps.common.api.ID_UNDEFINED
-import de.dh.raaps.common.api.data.SmoothedBgSample
+import de.dh.raaps.common.api.data.BgReading
 import de.dh.raaps.common.api.data.Tick
 
 /**
@@ -23,7 +23,7 @@ data class TickState(
     /**
      * The blood glucose value from our source,either via CGM or bloody measure.
      */
-    var bg: SmoothedBgSample? = null,
+    var bg: BgReading? = null,
 
     // Calculated fields
 

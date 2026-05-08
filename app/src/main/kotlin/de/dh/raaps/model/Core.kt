@@ -3,16 +3,11 @@ package de.dh.raaps.model
 import android.util.Log
 import de.dh.raaps.common.api.DataProvider
 import de.dh.raaps.common.api.GlucosePlugin
-import de.dh.raaps.common.api.data.BgReadingsInterval
+import de.dh.raaps.common.api.data.BgReading
 import de.dh.raaps.common.api.data.BgSampleKind
 import de.dh.raaps.common.api.data.Minutes
 import de.dh.raaps.common.api.data.SensorType
-import de.dh.raaps.common.api.data.SmoothedBgSample
 import de.dh.raaps.data.DataRepository
-import de.dh.raaps.model.bgpipeline.persist
-import de.dh.raaps.model.bgpipeline.smoothGlucoseSmart_1_Minute_Readings
-import de.dh.raaps.model.bgpipeline.smoothGlucoseSmart_5_Minute_Readings
-import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 
@@ -66,9 +61,9 @@ class Core(
 ) {
     // State
     var rollingHistory: RollingHistory = RollingHistory(historyHours = 0, tickDuration = Minutes(5))
-    var currentBg: SmoothedBgSample? = null
+    var currentBg: BgReading? = null
         private set
-    var lastBg: SmoothedBgSample? = null
+    var lastBg: BgReading? = null
         private set
 
     var coreState: CoreState = CoreState.Uninitialized
@@ -150,55 +145,30 @@ class Core(
         dataProvider: DataProvider,
         sensorType: SensorType
     ) {
+        Log.d(TAG, "Installing glucose pipeline")
+
         val readingsInterval = plugin.readingsInterval
         val datasourceTimeDelay = plugin.readingsTimeDelay
         // TODO: Save changes in readings interval (5 minutes to 1 minutes and vice versa) to database
+
+        glucoseReadingsTimeDelay = datasourceTimeDelay
 
         // Persist values
         val persistedValues = plugin.getValues()
             .persist(dataRepository, dataProvider, sensorType)
 
-        // Smooth values.
-        // filterTimeDelay could be used if we apply a filter which will emit the smoothed
-        // value with a delay, e.g. for extremely noisy values.
-        val (smoothedValues, filterTimeDelay) = when (readingsInterval) {
-            BgReadingsInterval.OneMinute ->
-                // More aggressive smoothing to get better values
-                Pair(
-                    persistedValues
-                        .smoothGlucoseSmart_1_Minute_Readings(),
-                    Minutes(0)
-                )
-
-            BgReadingsInterval.FiveMinutes ->
-                // Less smoothing to avoid additional delay of values
-                Pair(
-                    persistedValues
-                        .smoothGlucoseSmart_5_Minute_Readings(),
-                    Minutes(0)
-                )
-
-            BgReadingsInterval.AdHoc ->
-                // No smoothing at all
-                Pair(
-                    persistedValues
-                        .map { SmoothedBgSample.plainValue(it) },
-                    Minutes(0)
-                )
-        }
-
-        glucoseReadingsTimeDelay = datasourceTimeDelay + filterTimeDelay
-
         // Collect for core calculation
-        smoothedValues
+        val tickInterval = rollingHistory.tickDuration
+        persistedValues
+            .sampleByTickStable(tickInterval)
+            .fillGaps(tickInterval)
             // Threading notice:
-            // Since we're in a coroutine, this collect call won't block our (single) thread while
+            // The .collect call will block our coroutine, so it must be the last action in this method.
+            // But since we're in a coroutine, the call won't block our (single) thread while
             // waiting for new values; instead, it will just suspend and free the thread for other work.
-            .collect { bg ->
+            .collect { (bg, _) ->
                 updateBg(bg)
             }
-
-        Log.d(TAG, "Installed glucose pipeline")
     }
 
     private suspend fun initializeRollingHistory(dataRepository: DataRepository): RollingHistory {
@@ -214,7 +184,7 @@ class Core(
      * Processes a new glucose reading. This can also be called from outside to provide an additional
      * bg value, e.g. from a bloody measure.
      */
-    suspend fun updateBg(bg: SmoothedBgSample) {
+    suspend fun updateBg(bg: BgReading) {
         busyWork {
             if (bg.sampleKind == BgSampleKind.Invalid) {
                 Log.d(TAG, "Skipping BG entry $bg because it has an invalid value")

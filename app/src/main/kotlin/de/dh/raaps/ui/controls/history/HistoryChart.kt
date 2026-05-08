@@ -38,17 +38,16 @@ import com.patrykandpatrick.vico.compose.common.Position
 import com.patrykandpatrick.vico.compose.common.component.rememberShapeComponent
 import com.patrykandpatrick.vico.compose.common.data.ExtraStore
 import de.dh.raaps.common.api.ID_UNDEFINED
+import de.dh.raaps.common.api.data.BgReading
 import de.dh.raaps.common.api.data.BgSampleKind
 import de.dh.raaps.common.api.data.BgValue
 import de.dh.raaps.common.api.data.Minutes
-import de.dh.raaps.common.api.data.SmoothedBgSample
 import de.dh.raaps.common.api.data.Tick
 import de.dh.raaps.common.api.data.Timestamp
 import de.dh.raaps.common.ui.composables.Blue200
 import de.dh.raaps.common.ui.composables.BlueA200
 import de.dh.raaps.common.ui.composables.DeepOrangeA700
 import de.dh.raaps.common.ui.composables.RedA700
-import de.dh.raaps.common.ui.composables.Yellow
 import de.dh.raaps.common.ui.theme.AppTheme
 import de.dh.raaps.model.TickState
 import java.util.Calendar
@@ -73,6 +72,10 @@ data class DiagramData(
             val validBgValueIndices = tickStates.indices.filter {
                 val bg = tickStates[it]?.bg ?: return@filter false
                 bg.sampleKind != BgSampleKind.Invalid
+            }
+
+            if (validBgValueIndices.isEmpty()) {
+                return empty(tickInterval)
             }
 
             // The first tick with is visible in the diagram.
@@ -149,15 +152,9 @@ fun BgHistoryChart(
                 lineSeries { }
             } else{
                 lineSeries {
-                    // Series 1: Smoothed values (smoothedValue) - Drawn first (under)
                     series(
                         x = diagramData.validIndices,
-                        y = diagramData.validIndices.map { diagramData.tickStates[it]!!.bg!!.smoothedValue.mgdl.toFloat() }
-                    )
-                    // Series 2: Raw values (origValue) - Drawn second (over)
-                    series(
-                        x = diagramData.validIndices,
-                        y = diagramData.validIndices.map { diagramData.tickStates[it]!!.bg!!.origValue.mgdl.toFloat() }
+                        y = diagramData.validIndices.map { diagramData.tickStates[it]!!.bg!!.value.mgdl.toFloat() }
                     )
                 }
             }
@@ -267,7 +264,7 @@ fun BgHistoryChart(
                 calendar.get(Calendar.MINUTE)
             )
 
-            val bgValue = diagramData.tickStates.getOrNull(x.toInt())?.bg?.smoothedValue?.mgdl?.toInt() ?: 0
+            val bgValue = diagramData.tickStates.getOrNull(x.toInt())?.bg?.value?.mgdl?.toInt() ?: 0
             if (bgValue == 0) return@ValueFormatter timeStr
 
             "$timeStr | $bgValue mg/dL"
@@ -315,14 +312,8 @@ fun BgHistoryChart(
         chart = rememberCartesianChart(
             rememberLineCartesianLayer(
                 lineProvider = LineCartesianLayer.LineProvider.series(
-                    // Style for Series 1 (Yellow, Smoothed values)
+                    // Style for BG values (Blue)
                     LineCartesianLayer.rememberLine(
-                        fill = LineCartesianLayer.LineFill.single(Fill(Yellow)),
-                        pointProvider = null // No dots for the smoothed line
-                    ),
-                    // Style for Series 2 (Blue, Raw values)
-                    LineCartesianLayer.rememberLine(
-                        fill = LineCartesianLayer.LineFill.single(Fill(Blue200)),
                         pointProvider = LineCartesianLayer.PointProvider.single(
                             LineCartesianLayer.Point(
                                 rememberShapeComponent(
@@ -375,7 +366,7 @@ fun BgHistoryChartOrDefault(
     )
 }
 
-fun generatedBg(minsInterval: Short, index: Int, startTs: Timestamp): SmoothedBgSample {
+fun generatedBg(minsInterval: Short, index: Int, startTs: Timestamp): BgReading {
     // Base curve: average 120, fluctuation of +/- 50 using overlapping sine waves
     val base = 170.0
     val curve = 100.0 * sin(index * minsInterval / 50.0) + 15.0 * sin(index / 12.0)
@@ -383,8 +374,7 @@ fun generatedBg(minsInterval: Short, index: Int, startTs: Timestamp): SmoothedBg
 
     val bgValue = (base + curve + noise).toInt().coerceIn(40, 400)
 
-    return SmoothedBgSample(
-        BgValue.fromMgDl(bgValue),
+    return BgReading(
         BgValue.fromMgDl(bgValue),
         BgSampleKind.Value,
         Timestamp(startTs.ms + index * minsInterval * 60_000L)

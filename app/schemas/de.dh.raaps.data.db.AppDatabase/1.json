@@ -2,7 +2,7 @@
   "formatVersion": 1,
   "database": {
     "version": 1,
-    "identityHash": "a502d8e35b60f8c6cf77831d8b001bcb",
+    "identityHash": "9361664d60ab31843102038a6d7b68ac",
     "entities": [
       {
         "tableName": "sensor_type",
@@ -185,7 +185,7 @@
       },
       {
         "tableName": "tick_state",
-        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `tick` INTEGER NOT NULL, `orig_bg_value` INTEGER, `smoothed_bg_value` INTEGER, `bg_sample_kind` TEXT, `bg_readig_timestamp` INTEGER)",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `tick` INTEGER NOT NULL, `bg_value` INTEGER, `bg_sample_kind` TEXT, `bg_readig_timestamp` INTEGER)",
         "fields": [
           {
             "fieldPath": "id",
@@ -200,13 +200,8 @@
             "notNull": true
           },
           {
-            "fieldPath": "orig_bg_value",
-            "columnName": "orig_bg_value",
-            "affinity": "INTEGER"
-          },
-          {
-            "fieldPath": "smoothed_bg_value",
-            "columnName": "smoothed_bg_value",
+            "fieldPath": "bg_value",
+            "columnName": "bg_value",
             "affinity": "INTEGER"
           },
           {
@@ -241,7 +236,7 @@
     ],
     "setupQueries": [
       "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
-      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, 'a502d8e35b60f8c6cf77831d8b001bcb')"
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '9361664d60ab31843102038a6d7b68ac')"
     ]
   }
 }
