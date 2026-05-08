@@ -44,6 +44,7 @@ import de.dh.raaps.ui.theme.AppTheme
 fun CurrentBgView(
     centerText: String,
     textBgColor: Color,
+    textBold: Boolean,
     deltaText: String?,
     timestamp: Timestamp?,
     trendAngle: Float?,
@@ -138,7 +139,7 @@ fun CurrentBgView(
                 text = centerText,
                 style = MaterialTheme.typography.displayLarge.copy(
                     fontSize = 48.sp,
-                    fontWeight = FontWeight.Bold,
+                    fontWeight = if (textBold) FontWeight.Bold else FontWeight.Light,
                     lineHeight = 48.sp
                 ),
                 color = textBgColor
@@ -178,6 +179,8 @@ fun CurrentBgView(
             else -> Red
         }
 
+    val textLight = currentBgValue?.isValueOld ?: false
+
     val deltaText = currentBgValue?.delta?.toDiff(currentBgValue.glucoseUnit)
 
     val trendAngle =
@@ -196,6 +199,7 @@ fun CurrentBgView(
     CurrentBgView(
         centerText,
         textBgColor,
+        !textLight,
         deltaText,
         currentBgValue?.timestamp,
         trendAngle,
