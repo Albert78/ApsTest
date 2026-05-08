@@ -15,7 +15,7 @@ import de.dh.raaps.common.api.data.BgSampleKind
 )
 data class SensorTypeEntity(
     @PrimaryKey(autoGenerate = true)
-    val id: Long = ID_UNDEFINED,
+    var id: Long = ID_UNDEFINED,
     val name: String
 )
 
@@ -27,7 +27,7 @@ data class SensorTypeEntity(
 )
 data class DataProviderEntity(
     @PrimaryKey(autoGenerate = true)
-    val id: Long = ID_UNDEFINED,
+    var id: Long = ID_UNDEFINED,
     val name: String,
     val type: String
 )

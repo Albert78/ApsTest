@@ -24,7 +24,10 @@ class DataRepository(val database: AppDatabase) {
             entity = SensorTypeEntity(
                 name = name
             )
-            dao.insertSensorType(entity)
+            val id = dao.insertSensorType(entity)
+            if (id != -1L) {
+                entity.id = id
+            }
         }
         return entity.toModel()
     }
@@ -37,7 +40,10 @@ class DataRepository(val database: AppDatabase) {
                 name = name,
                 type = type
             )
-            dao.insertDataProvider(entity)
+            val id = dao.insertDataProvider(entity)
+            if (id != -1L) {
+                entity.id = id
+            }
         }
         return entity.toModel()
     }
