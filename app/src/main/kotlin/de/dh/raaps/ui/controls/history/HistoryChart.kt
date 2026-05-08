@@ -44,7 +44,6 @@ import de.dh.raaps.common.api.data.BgValue
 import de.dh.raaps.common.api.data.Minutes
 import de.dh.raaps.common.api.data.Tick
 import de.dh.raaps.common.api.data.Timestamp
-import de.dh.raaps.common.ui.composables.Blue200
 import de.dh.raaps.common.ui.composables.BlueA200
 import de.dh.raaps.common.ui.composables.DeepOrangeA700
 import de.dh.raaps.common.ui.composables.RedA700
@@ -75,7 +74,7 @@ data class DiagramData(
             }
 
             if (validBgValueIndices.isEmpty()) {
-                return empty(tickInterval)
+                return null
             }
 
             // The first tick with is visible in the diagram.
@@ -91,7 +90,7 @@ data class DiagramData(
             // Needed for the conversion time <-> x value:
             // - tickAtIndex0 * tickInterval is the time in ms since epoch start
             // - The x value is aligned on the index in our tickStates list.
-            val tickAtIndex0 = firstValidTick - firstValidTickIndex * tickInterval.value
+            val tickAtIndex0 = firstValidTick - firstValidTickIndex
             val tickAtEndIndex = tickAtIndex0 + tickStates.size
 
             val ticksPerHour = 60 / tickInterval.value
@@ -151,7 +150,7 @@ fun BgHistoryChart(
             if (diagramData.validIndices.isEmpty()) {
                 lineSeries {
                     // Dummy series - invisible at y=0
-                    series(x = listOf(0.0, 1.0), y = listOf(0.0, 0.0))                    
+                    series(x = listOf(0.0, 1.0), y = listOf(0.0, 0.0))
                 }
             } else{
                 lineSeries {
@@ -160,6 +159,24 @@ fun BgHistoryChart(
                         y = diagramData.validIndices.map { diagramData.tickStates[it]!!.bg!!.value.mgdl.toFloat() }
                     )
                 }
+            }
+        }
+    }
+
+    val rangeProvider = remember(diagramData) {
+        object : CartesianLayerRangeProvider {
+            override fun getMinY(minY: Double, maxY: Double, extraStore: ExtraStore) = 40.0
+            override fun getMaxY(minY: Double, maxY: Double, extraStore: ExtraStore): Double {
+                val baseMax = maxY.coerceAtLeast(200.0) + 10.0
+                return baseMax.coerceAtMost(410.0)
+            }
+
+            override fun getMinX(minX: Double, maxX: Double, extraStore: ExtraStore): Double {
+                return diagramData.minX.toDouble()
+            }
+
+            override fun getMaxX(minX: Double, maxX: Double, extraStore: ExtraStore): Double {
+                return diagramData.maxX.toDouble()
             }
         }
     }
@@ -182,25 +199,7 @@ fun BgHistoryChart(
         HorizontalAxis.ItemPlacer.aligned(spacing = { ticksPerHour }, offset = { ticksMinXToNextHour })
     }
 
-    val rangeProvider = remember(diagramData) {
-        object : CartesianLayerRangeProvider {
-            override fun getMinY(minY: Double, maxY: Double, extraStore: ExtraStore) = 40.0
-            override fun getMaxY(minY: Double, maxY: Double, extraStore: ExtraStore): Double {
-                val baseMax = maxY.coerceAtLeast(200.0) + 10.0
-                return baseMax.coerceAtMost(410.0)
-            }
-
-            override fun getMinX(minX: Double, maxX: Double, extraStore: ExtraStore): Double {
-                return diagramData.minX.toDouble()
-            }
-
-            override fun getMaxX(minX: Double, maxX: Double, extraStore: ExtraStore): Double {
-                return diagramData.maxX.toDouble()
-            }
-        }
-    }
-
-    val yAxisItemPlacer = remember {
+    val yItemPlacer = remember {
         object : VerticalAxis.ItemPlacer {
             override fun getLabelValues(
                 context: CartesianDrawingContext,
@@ -330,7 +329,7 @@ fun BgHistoryChart(
                 ),
                 rangeProvider = rangeProvider
             ),
-            startAxis = VerticalAxis.rememberStart(itemPlacer = yAxisItemPlacer),
+            startAxis = VerticalAxis.rememberStart(itemPlacer = yItemPlacer),
             bottomAxis = HorizontalAxis.rememberBottom(
                 valueFormatter = xAxisValueFormatter,
                 itemPlacer = xItemPlacer
